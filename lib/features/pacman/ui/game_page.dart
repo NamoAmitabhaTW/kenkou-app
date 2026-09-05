@@ -116,7 +116,18 @@ class _PacmanGamePageState extends State<PacmanGamePage>
 
   void _onSyllable(SyllableHit hit) {
     final direction = kDirectionBySyllable[hit.syllable];
-    if (direction != null) _apply(direction);
+    if (direction == null) return;
+    _apply(direction);
+
+    // 每認到一個音就重開串流。整局共用一條串流時,辨識器的上下文會越積越長,
+    // 德文模型會把連續的 pa 黏成 "paar",ka / ta 的區別也跟著變差 ——
+    // 健口操每換一個動作就 restart 一次,所以不會遇到,吃金幣原本整局只 restart
+    // 一次(開場倒數結束時)。
+    //
+    // 代價是 PatakaDetector 類別說明講的那件事:reset 之後串流從零開始,
+    // 緊接著說的下一個音少了前後文,比較容易漏。restart() 會先墊半秒靜音暖機
+    // 來補償。
+    if (_phase == _Phase.playing) _detector?.restart();
   }
 
   void _apply(MoveDirection direction) {
