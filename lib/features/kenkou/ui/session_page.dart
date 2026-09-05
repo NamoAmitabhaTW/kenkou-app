@@ -175,7 +175,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
       _voiceReady = true;
       debugLog('KENKOU', '語音辨識已載入');
     } catch (e) {
-      debugLog('KENKOU', '語音辨識載入失敗,パタカラ 改手動計次:$e');
+      debugLog('KENKOU', '語音辨識載入失敗,怕踏卡啦 改手動計次:$e');
       _voiceReady = false;
     }
   }
@@ -307,7 +307,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     final justCounted = _lastRepAt != null &&
         DateTime.now().difference(_lastRepAt!) < const Duration(milliseconds: 800);
     if (justCounted) return;
-    _showHint('再說一次「${target.labelIn(_settings.labelSystem)}」');
+    _showHint('再說一次「${target.label}」');
   }
 
   // MARK: 流程
@@ -348,7 +348,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
       case SessionEvent.partial:
         final next = _session.targetShape;
         if (next != null) {
-          _showHint('很好!接著「${next.labelIn(_settings.labelSystem)}」');
+          _showHint('很好!接著「${next.label}」');
         }
       case SessionEvent.rep:
         _showThumb('做對了!');

@@ -1,6 +1,5 @@
 import 'package:face_mesh/face_mesh.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:futuremode2026/core/label_system.dart';
 import 'package:futuremode2026/core/voice/syllable.dart';
 import 'package:futuremode2026/features/kenkou/domain/exercise_program.dart';
 import 'package:futuremode2026/features/kenkou/domain/face_geometry.dart';
@@ -248,16 +247,15 @@ void main() {
         strictness: 70,
         voiceSensitivity: 5,
         showDebug: true,
-        labelSystem: LabelSystem.kana,
       );
       final restored = KenkouSettings.fromJson(original.toJson());
       expect(restored.toJson(), original.toJson());
     });
 
     test('壞掉或缺欄位的 JSON 退回預設並夾在範圍內', () {
+      // 多出來的欄位(舊版設定檔留下的)要被忽略,不能讓整包解析失敗。
       final s = KenkouSettings.fromJson({'faceReps': 999, 'labelSystem': 'nope'});
       expect(s.faceReps, kMaxFaceReps);
-      expect(s.labelSystem, LabelSystem.zhuyin);
       expect(s.patakaReps, const KenkouSettings().patakaReps);
     });
 

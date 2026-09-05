@@ -1,4 +1,3 @@
-import '../../../core/label_system.dart';
 import '../../../core/voice/voice_sensitivity.dart';
 
 const kMinFaceReps = 1;
@@ -27,7 +26,6 @@ class KenkouSettings {
     this.strictness = 80,
     this.voiceSensitivity = kDefaultVoiceSensitivity,
     this.showDebug = false,
-    this.labelSystem = LabelSystem.zhuyin,
   });
 
   /// 每個嘴型動作(嘟嘴、張大嘴巴、「衣～」)要做幾次。
@@ -48,7 +46,6 @@ class KenkouSettings {
   /// 在畫面上顯示判定數值。調參數時用。
   final bool showDebug;
 
-  final LabelSystem labelSystem;
 
   Duration get hold => Duration(milliseconds: holdMillis);
 
@@ -64,7 +61,6 @@ class KenkouSettings {
     int? strictness,
     int? voiceSensitivity,
     bool? showDebug,
-    LabelSystem? labelSystem,
   }) {
     return KenkouSettings(
       faceReps: faceReps ?? this.faceReps,
@@ -73,7 +69,6 @@ class KenkouSettings {
       strictness: strictness ?? this.strictness,
       voiceSensitivity: voiceSensitivity ?? this.voiceSensitivity,
       showDebug: showDebug ?? this.showDebug,
-      labelSystem: labelSystem ?? this.labelSystem,
     );
   }
 
@@ -84,7 +79,6 @@ class KenkouSettings {
         'strictness': strictness,
         'voiceSensitivity': voiceSensitivity,
         'showDebug': showDebug,
-        'labelSystem': labelSystem.name,
       };
 
   /// 每個數字都夾回合法範圍 —— 設定檔可能是舊版本寫的,也可能被手動改過。
@@ -104,10 +98,6 @@ class KenkouSettings {
       voiceSensitivity: read('voiceSensitivity', defaults.voiceSensitivity,
           kMinVoiceSensitivity, kMaxVoiceSensitivity),
       showDebug: json['showDebug'] as bool? ?? defaults.showDebug,
-      labelSystem: LabelSystem.values.firstWhere(
-        (v) => v.name == json['labelSystem'],
-        orElse: () => defaults.labelSystem,
-      ),
     );
   }
 }

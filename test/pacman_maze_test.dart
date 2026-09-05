@@ -191,7 +191,7 @@ void main() {
     expect(MoveDirection.up.word, '怕');
     expect(MoveDirection.left.word, '踏');
     expect(MoveDirection.right.word, '卡');
-    expect(MoveDirection.down.word, '拉');
+    expect(MoveDirection.down.word, '啦');
   });
 }
 

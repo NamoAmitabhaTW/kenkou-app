@@ -92,7 +92,7 @@ class ExerciseStep {
 List<ExerciseStep> buildProgram(KenkouSettings s) {
   const mouth = '嘴巴的體操';
   const tongue = '舌頭的體操(舌壓訓練)';
-  const pataka = 'パタカラ體操';
+  const pataka = '怕踏卡啦體操';
 
   return [
     ExerciseStep(
@@ -152,12 +152,12 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       ExerciseStep(
         id: 'pataka_${syllable.name}_1',
         section: pataka,
-        title: switch (syllable) {
-          Syllable.pa => '① パ',
-          Syllable.ta => '② タ',
-          Syllable.ka => '③ カ',
-          Syllable.ra => '④ ラ',
-        },
+        title: '${switch (syllable) {
+          Syllable.pa => '①',
+          Syllable.ta => '②',
+          Syllable.ka => '③',
+          Syllable.ra => '④',
+        }} ${syllable.label}',
         instruction: switch (syllable) {
           Syllable.pa => '嘴唇先閉緊,再用力彈開,清楚地說出來',
           Syllable.ta => '舌尖抵住上排門牙後面,再彈開',

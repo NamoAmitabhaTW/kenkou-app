@@ -2,45 +2,32 @@ import 'dart:math' as math;
 
 import 'package:face_mesh/face_mesh.dart';
 
-import '../../../core/label_system.dart';
-
 /// 健口操要判的目標嘴型。
 ///
-/// 用 IPA 的母音來命名而不是用某一套文字,因為同一個嘴型在
-/// 注音 / 國字 / 日文 底下只是換個寫法:ㄚ = 啊 = あ = /a/。
+/// 用 IPA 的母音來命名而不是用顯示的那個字,因為命名要穩定:/a/ 這個嘴型
+/// 不管畫面上寫成哪個字都是同一個判定樣板。
 ///
 /// 只列「靠嘴唇與下顎就看得出來」的動作。パタカラ 的 タ / カ / ラ
 /// 是舌頭動作,face mesh 沒有舌頭的幾何,視覺上判不出來 — 那三個
 /// 要靠麥克風,不要在這裡假裝測得到。
 ///
-/// 同樣的理由,注音的 ㄩ 也刻意沒有納入:ㄩ 跟 ㄨ 的差別在舌位不在唇形,
+/// 同樣的理由,ㄩ 這個音也刻意沒有納入:它跟 ㄨ 的差別在舌位不在唇形,
 /// 兩者的 blendshape 幾乎一樣,當成兩個可分辨的目標只會製造假陽性。
 enum MouthShape {
-  neutral(zhuyin: '閉口', hanzi: '閉口', kana: '閉口'),
-  a(zhuyin: 'ㄚ', hanzi: '啊', kana: 'あ'),
-  i(zhuyin: 'ㄧ', hanzi: '衣', kana: 'い'),
-  u(zhuyin: 'ㄨ', hanzi: '嗚', kana: 'う'),
-  e(zhuyin: 'ㄝ', hanzi: '耶', kana: 'え'),
-  o(zhuyin: 'ㄛ', hanzi: '喔', kana: 'お'),
-  pa(zhuyin: 'ㄆㄚ', hanzi: '趴', kana: 'パ'),
-  cheekPuff(zhuyin: '鼓起臉頰', hanzi: '鼓起臉頰', kana: '鼓起臉頰'),
-  cheekSuck(zhuyin: '收縮臉頰', hanzi: '收縮臉頰', kana: '收縮臉頰');
+  neutral(label: '閉口'),
+  a(label: '啊'),
+  i(label: '衣'),
+  u(label: '嗚'),
+  e(label: '耶'),
+  o(label: '喔'),
+  pa(label: '趴'),
+  cheekPuff(label: '鼓起臉頰'),
+  cheekSuck(label: '收縮臉頰');
 
-  const MouthShape({
-    required this.zhuyin,
-    required this.hanzi,
-    required this.kana,
-  });
+  const MouthShape({required this.label});
 
-  final String zhuyin;
-  final String hanzi;
-  final String kana;
-
-  String labelIn(LabelSystem system) => switch (system) {
-        LabelSystem.zhuyin => zhuyin,
-        LabelSystem.hanzi => hanzi,
-        LabelSystem.kana => kana,
-      };
+  /// 畫面上顯示的字。
+  final String label;
 }
 
 /// 把左右成對的 blendshape 併成一個特徵。

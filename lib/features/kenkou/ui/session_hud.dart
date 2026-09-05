@@ -222,7 +222,7 @@ class SessionHud extends StatelessWidget {
     };
 
     final holdSeconds = (step.hold ?? settings.hold).inMilliseconds / 1000;
-    final label = session.targetShape?.labelIn(settings.labelSystem) ?? '';
+    final label = session.targetShape?.label ?? '';
     final stateText = switch (session.tracker?.state) {
       null || HoldState.idle => '做出「$label」',
       HoldState.entering => '再用力一點',
@@ -286,7 +286,7 @@ class SessionHud extends StatelessWidget {
 
   /// パタカラ:靠麥克風聽音節計次的步驟。
   Widget _speechPanel(ExerciseStep step) {
-    final label = step.syllable!.labelIn(settings.labelSystem);
+    final label = step.syllable!.label;
 
     return Row(
       children: [
@@ -392,7 +392,7 @@ class SessionHud extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        '判定 ${detected.shape.labelIn(settings.labelSystem)} '
+        '判定 ${detected.shape.label} '
         '${detected.confidence.toStringAsFixed(2)}   '
         '目標分數 ${targetScore.toStringAsFixed(2)} / 門檻 ${settings.enterThreshold}\n'
         'width ${frame.mouthWidthRatio.toStringAsFixed(3)}  '

@@ -5,21 +5,20 @@ import '../../../core/voice/syllable.dart';
 /// 迷宮裡的一格是什麼。
 enum Tile { wall, floor, coin, power }
 
-/// 小精靈能走的四個方向,以及要念哪個字才會往那邊走。
+/// 小精靈能走的四個方向,以及要念哪個音才會往那邊走。
 ///
-/// 字是照 パタカラ 挑的:pa / ta / ka / ラ 四個音本來就是健口操在練的,
-/// 辨識器(`PatakaDetector`)也只認得這四個。用「怕踏卡拉」而不是
-/// 「啪踏咖啦」,是因為挑的是最好念、聲音差最多的常用字。
+/// 四個音就是健口操在練的那四個,辨識器(`PatakaDetector`)也只認得這四個。
+/// 顯示的字直接取自 [Syllable.label] —— 兩邊共用同一份標示,不會各自漂移。
 enum MoveDirection {
-  up(dx: 0, dy: -1, word: '怕', label: '往上移動', arrow: '↑'),
-  left(dx: -1, dy: 0, word: '踏', label: '往左移動', arrow: '←'),
-  right(dx: 1, dy: 0, word: '卡', label: '往右移動', arrow: '→'),
-  down(dx: 0, dy: 1, word: '拉', label: '往下移動', arrow: '↓');
+  up(dx: 0, dy: -1, syllable: Syllable.pa, label: '往上移動', arrow: '↑'),
+  left(dx: -1, dy: 0, syllable: Syllable.ta, label: '往左移動', arrow: '←'),
+  right(dx: 1, dy: 0, syllable: Syllable.ka, label: '往右移動', arrow: '→'),
+  down(dx: 0, dy: 1, syllable: Syllable.ra, label: '往下移動', arrow: '↓');
 
   const MoveDirection({
     required this.dx,
     required this.dy,
-    required this.word,
+    required this.syllable,
     required this.label,
     required this.arrow,
   });
@@ -27,10 +26,14 @@ enum MoveDirection {
   final int dx;
   final int dy;
 
-  /// 要念的字。
-  final String word;
+  /// 念哪個音會往這個方向走。
+  final Syllable syllable;
+
   final String label;
   final String arrow;
+
+  /// 要念的字。跟健口操同一份,改一處兩邊都會跟著改。
+  String get word => syllable.label;
 
   MoveDirection get opposite => switch (this) {
         MoveDirection.up => MoveDirection.down,
@@ -48,12 +51,9 @@ enum MoveDirection {
       };
 }
 
-/// 聽到的音節 → 往哪走。
-const kDirectionBySyllable = <Syllable, MoveDirection>{
-  Syllable.pa: MoveDirection.up,
-  Syllable.ta: MoveDirection.left,
-  Syllable.ka: MoveDirection.right,
-  Syllable.ra: MoveDirection.down,
+/// 聽到的音節 → 往哪走。從 [MoveDirection.syllable] 反推,對應關係只定義一次。
+final kDirectionBySyllable = <Syllable, MoveDirection>{
+  for (final direction in MoveDirection.values) direction.syllable: direction,
 };
 
 /// 預設迷宮:15 x 17,左右對稱,所有金幣都走得到(見 test/pacman_maze_test.dart)。

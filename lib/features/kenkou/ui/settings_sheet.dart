@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/label_system.dart';
 import '../../../core/ui/number_setting_row.dart';
 import '../domain/settings.dart';
 import '../data/settings_store.dart';
@@ -123,30 +122,6 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                       _update(s.copyWith(voiceSensitivity: v.round())),
                 ),
                 _heading(context, '顯示'),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 4),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.translate),
-                      const SizedBox(width: 16),
-                      const Text('文字標示', style: TextStyle(fontSize: 17)),
-                      const Spacer(),
-                      SegmentedButton<LabelSystem>(
-                        segments: [
-                          for (final system in LabelSystem.values)
-                            ButtonSegment(
-                              value: system,
-                              label: Text(system.displayName),
-                            ),
-                        ],
-                        selected: {s.labelSystem},
-                        showSelectedIcon: false,
-                        onSelectionChanged: (set) =>
-                            _update(s.copyWith(labelSystem: set.first)),
-                      ),
-                    ],
-                  ),
-                ),
                 SwitchListTile(
                   secondary: const Icon(Icons.bug_report_outlined),
                   title: const Text('顯示判定數值', style: TextStyle(fontSize: 17)),
