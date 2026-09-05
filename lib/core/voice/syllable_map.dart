@@ -7,10 +7,10 @@
 /// 它也會把連續的 pa 黏成 "paar",ta / ka 有時只吐一個 "t" / "k",這些都收成一個音節。
 /// 比對前先轉小寫、去掉標點。
 const kSyllableByGermanWord = <String, String>{
-  'pa': 'pa', 'paar': 'pa', 'pah': 'pa', 'par': 'pa', 'ba': 'pa', 'bah': 'pa', 'bar': 'pa', 'papa': 'pa',
+  'pa': 'pa', 'p': 'pa', 'papp': 'pa', 'paar': 'pa', 'pah': 'pa', 'par': 'pa', 'ba': 'pa', 'bah': 'pa', 'bar': 'pa', 'papa': 'pa',
   'ta': 'ta', 't': 'ta', 'tag': 'ta', 'tah': 'ta', 'tar': 'ta', 'da': 'ta', 'dah': 'ta', 'dar': 'ta', 'tata': 'ta',
   'ka': 'ka', 'k': 'ka', 'kah': 'ka', 'kar': 'ka', 'ga': 'ka', 'gah': 'ka', 'gar': 'ka', 'kaka': 'ka',
-  'ra': 'la', 'rah': 'la', 'raa': 'la', 'rar': 'la', 'la': 'la', 'lah': 'la', 'rara': 'la',
+  'ra': 'la', 'l': 'la', 'na': 'la', 'rah': 'la', 'raa': 'la', 'rar': 'la', 'la': 'la', 'lah': 'la', 'rara': 'la',
 };
 
 /// 把德文模型的一個字對回音節;對不到回傳 null。
