@@ -84,12 +84,6 @@ class _KenkouHomePageState extends State<KenkouHomePage> {
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '照著日本牙醫師會的口腔體操\n一個動作、一個動作做',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18, height: 1.6, color: scheme.outline),
-                  ),
                   const SizedBox(height: 48),
                   FilledButton.icon(
                     onPressed: ready ? _start : null,

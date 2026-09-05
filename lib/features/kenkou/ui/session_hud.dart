@@ -32,7 +32,6 @@ class SessionHud extends StatelessWidget {
     required this.onExit,
     required this.onSkip,
     required this.onCountManually,
-    required this.onCompleteGuided,
   });
 
   final KenkouSession session;
@@ -60,7 +59,6 @@ class SessionHud extends StatelessWidget {
   final VoidCallback onExit;
   final VoidCallback onSkip;
   final VoidCallback onCountManually;
-  final VoidCallback onCompleteGuided;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +70,7 @@ class SessionHud extends StatelessWidget {
         const Spacer(),
         if (hint != null) _hintPill(),
         if (settings.showDebug && step != null) _debugPanel(),
-        if (step != null) _bottomPanel(step),
+        if (step != null) _actionBar(step),
       ],
     );
   }
@@ -106,44 +104,155 @@ class SessionHud extends StatelessWidget {
     );
   }
 
-  /// 動作名稱與說明。
+  /// 現在要做什麼。整個畫面只有這一塊在講這件事。
+  ///
+  /// 原本上下各一塊提示框:上面放名稱與說明、下面放次數與狀態。兩塊互相搶
+  /// 注意力,而且長輩要在一公尺外看,兩邊的字都不夠大。合併成一塊之後只留
+  /// 三件事 —— 標題、次數、現在該做什麼 —— 字全部放大。
   Widget _stepCard(ExerciseStep step) {
-    final caution = step.caution;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.black.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(step.section,
-              style: const TextStyle(color: Colors.white60, fontSize: 14)),
-          const SizedBox(height: 2),
-          Text(step.title,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 6),
-          Text(step.instruction,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 17, height: 1.4)),
-          if (caution != null) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(Icons.warning_amber_rounded,
-                    size: 18, color: Colors.orangeAccent),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(caution,
-                      style: const TextStyle(
-                          color: Colors.orangeAccent, fontSize: 14)),
-                ),
-              ],
-            ),
+      child: switch (step.mode) {
+        StepMode.face => _faceCard(step),
+        StepMode.speech => _speechCard(step),
+        StepMode.guided => _guidedCard(step),
+      },
+    );
+  }
+
+  Widget _title(String text) => Text(
+        text,
+        style: const TextStyle(
+            color: Colors.white,
+            fontSize: 52,
+            fontWeight: FontWeight.w900,
+            height: 1.1),
+      );
+
+  Widget _status(String text) => Text(
+        text,
+        style: const TextStyle(
+            color: Colors.white,
+            fontSize: 40,
+            fontWeight: FontWeight.w800,
+            height: 1.2),
+      );
+
+  Widget _counter(int done, int total) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('$done',
+            style: const TextStyle(
+                color: kAccentGreen,
+                fontSize: 68,
+                fontWeight: FontWeight.w900,
+                height: 1)),
+        Text(' / $total 次',
+            style: const TextStyle(color: Colors.white70, fontSize: 28)),
+      ],
+    );
+  }
+
+  /// 嘴型:靠相機分數計次的步驟。
+  Widget _faceCard(ExerciseStep step) {
+    final label = session.targetShape?.label ?? '';
+    final stateText = switch (session.tracker?.state) {
+      null || HoldState.idle => '做出「$label」',
+      HoldState.entering => '再用力一點',
+      HoldState.holding => '維持住…',
+      HoldState.completed => '很好,放鬆',
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _title(step.title),
+        const SizedBox(height: 10),
+        _counter(session.reps, step.reps),
+        const SizedBox(height: 10),
+        _status(stateText),
+        const SizedBox(height: 14),
+        // 「維持住…」還要維持多久,只靠文字看不出來。
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: session.holdProgress,
+            minHeight: 12,
+            backgroundColor: Colors.white12,
+            valueColor: AlwaysStoppedAnimation(
+                session.isHolding ? kAccentGreen : Colors.white70),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 怕踏卡啦:靠麥克風聽音節計次的步驟。
+  Widget _speechCard(ExerciseStep step) {
+    final label = step.syllable!.label;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _title(step.title),
+        const SizedBox(height: 10),
+        _counter(session.reps, step.reps),
+        const SizedBox(height: 10),
+        _status(voiceReady ? '大聲說「$label」' : '說一次,按一下 +1'),
+      ],
+    );
+  }
+
+  /// 相機和麥克風都判不出來的步驟(舌頭頂臉頰):只有倒數計時引導。
+  ///
+  /// 倒數歸零就自動算做完,所以不需要「做完了」按鈕。
+  Widget _guidedCard(ExerciseStep step) {
+    // 標題跟倒數同一列,動作指示獨佔一整行 —— 指示字最長,擠在倒數圈旁邊會折行。
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _title('舌壓訓練')),
+            const SizedBox(width: 12),
+            _countdownRing(step),
           ],
+        ),
+        const SizedBox(height: 10),
+        _status(step.title),
+      ],
+    );
+  }
+
+  Widget _countdownRing(ExerciseStep step) {
+    final total = step.guidedSeconds;
+    return SizedBox(
+      width: 84,
+      height: 84,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 80,
+            height: 80,
+            child: CircularProgressIndicator(
+              value: total == 0 ? 0 : guidedRemaining / total,
+              strokeWidth: 7,
+              backgroundColor: Colors.white24,
+              valueColor: const AlwaysStoppedAnimation(kAccentGreen),
+            ),
+          ),
+          Text('$guidedRemaining',
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w900)),
         ],
       ),
     );
@@ -152,7 +261,7 @@ class SessionHud extends StatelessWidget {
   Widget _hintPill() {
     return Container(
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(14),
@@ -161,223 +270,42 @@ class SessionHud extends StatelessWidget {
         hint!,
         textAlign: TextAlign.center,
         style: const TextStyle(
-            color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
+            color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700),
       ),
     );
   }
 
-  /// 底下的計數與狀態,依動作類型長得不一樣。
-  Widget _bottomPanel(ExerciseStep step) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
+  /// 畫面最下面的操作列。動作卡專心講「要做什麼」,按鈕放這裡才不會互相搶位置。
+  Widget _actionBar(ExerciseStep step) {
+    // 語音辨識起不來時的備援:自己按一下算一次,總比做不下去好。
+    final manual = step.mode == StepMode.speech && !voiceReady;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Row(
         children: [
-          switch (step.mode) {
-            StepMode.face => _facePanel(step),
-            StepMode.speech => _speechPanel(step),
-            StepMode.guided => _guidedPanel(step),
-          },
-          const SizedBox(height: 4),
-          TextButton(
-            onPressed: session.stepComplete ? null : onSkip,
-            child: const Text('跳過這個動作',
-                style: TextStyle(color: Colors.white54, fontSize: 15)),
+          Expanded(
+            child: TextButton(
+              onPressed: session.stepComplete ? null : onSkip,
+              style: TextButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52)),
+              child: const Text('跳過這個動作',
+                  style: TextStyle(color: Colors.white70, fontSize: 18)),
+            ),
           ),
+          if (manual) ...[
+            const SizedBox(width: 12),
+            FilledButton(
+              onPressed: session.stepComplete ? null : onCountManually,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(84, 84),
+                shape: const CircleBorder(),
+              ),
+              child: const Text('+1',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
+            ),
+          ],
         ],
       ),
-    );
-  }
-
-  Widget _counter(int done, int total) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('$done',
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 44,
-                fontWeight: FontWeight.w900,
-                height: 1)),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 6, left: 4),
-          child: Text('/ $total 次',
-              style: const TextStyle(color: Colors.white54, fontSize: 16)),
-        ),
-      ],
-    );
-  }
-
-  /// 嘴型:靠相機分數計次的步驟。
-  Widget _facePanel(ExerciseStep step) {
-    final (poseLabel, poseColor) = switch (frame) {
-      FaceFrame(hasFace: false) => ('沒有偵測到臉', Colors.redAccent),
-      FaceFrame(isPoseUsable: false) => ('請正對鏡頭', Colors.orangeAccent),
-      _ => ('偵測中', kAccentGreen),
-    };
-
-    final holdSeconds = (step.hold ?? settings.hold).inMilliseconds / 1000;
-    final label = session.targetShape?.label ?? '';
-    final stateText = switch (session.tracker?.state) {
-      null || HoldState.idle => '做出「$label」',
-      HoldState.entering => '再用力一點',
-      HoldState.holding => '維持住…',
-      HoldState.completed => '很好,放鬆',
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-                width: 8,
-                height: 8,
-                decoration:
-                    BoxDecoration(color: poseColor, shape: BoxShape.circle)),
-            const SizedBox(width: 8),
-            Text(poseLabel,
-                style: TextStyle(
-                    color: poseColor, fontSize: 13, fontWeight: FontWeight.w600)),
-            const Spacer(),
-            if (holdSeconds >= 3)
-              Text('每次保持 ${holdSeconds.toStringAsFixed(0)} 秒',
-                  style: const TextStyle(color: Colors.white54, fontSize: 13)),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            _counter(session.reps, step.reps),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(stateText,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(5),
-                    child: LinearProgressIndicator(
-                      value: session.holdProgress,
-                      minHeight: 10,
-                      backgroundColor: Colors.white12,
-                      valueColor: AlwaysStoppedAnimation(
-                          session.isHolding ? kAccentGreen : Colors.white70),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  /// パタカラ:靠麥克風聽音節計次的步驟。
-  Widget _speechPanel(ExerciseStep step) {
-    final label = step.syllable!.label;
-
-    return Row(
-      children: [
-        _counter(session.reps, step.reps),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('請大聲說',
-                  style: TextStyle(color: Colors.white70, fontSize: 14)),
-              Text(label,
-                  style: const TextStyle(
-                      color: kAccentGreen,
-                      fontSize: 44,
-                      fontWeight: FontWeight.w900,
-                      height: 1.1)),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(voiceReady ? Icons.mic : Icons.mic_off,
-                      size: 16, color: Colors.white54),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      voiceReady ? '一次一次清楚地說' : '語音辨識無法使用,說一次按一下',
-                      style: const TextStyle(color: Colors.white54, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        // 語音辨識起不來時的備援:自己按一下算一次,總比做不下去好。
-        if (!voiceReady)
-          FilledButton(
-            onPressed: session.stepComplete ? null : onCountManually,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(72, 72),
-              shape: const CircleBorder(),
-            ),
-            child: const Text('+1',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-          ),
-      ],
-    );
-  }
-
-  /// 相機和麥克風都判不出來的步驟(舌頭頂臉頰):倒數計時引導。
-  Widget _guidedPanel(ExerciseStep step) {
-    final total = step.guidedSeconds;
-    return Row(
-      children: [
-        SizedBox(
-          width: 76,
-          height: 76,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 72,
-                height: 72,
-                child: CircularProgressIndicator(
-                  value: total == 0 ? 0 : guidedRemaining / total,
-                  strokeWidth: 6,
-                  backgroundColor: Colors.white24,
-                  valueColor: const AlwaysStoppedAnimation(kAccentGreen),
-                ),
-              ),
-              Text('$guidedRemaining',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900)),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: FilledButton.icon(
-            onPressed: session.stepComplete ? null : onCompleteGuided,
-            style: kBigButtonStyle.copyWith(
-              minimumSize: const WidgetStatePropertyAll(Size.fromHeight(64)),
-            ),
-            icon: const Icon(Icons.check, size: 28),
-            label: const Text('做完了,下一個',
-                style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
-          ),
-        ),
-      ],
     );
   }
 

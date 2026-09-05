@@ -530,10 +530,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
               onExit: _confirmExit,
               onSkip: _skip,
               onCountManually: () => _handle(_session.countManually()),
-              onCompleteGuided: () {
-                _guidedTimer?.cancel();
-                _handle(_session.completeGuided());
-              },
             ),
           ),
           if (_thumbText != null) ThumbOverlay(text: _thumbText!),
