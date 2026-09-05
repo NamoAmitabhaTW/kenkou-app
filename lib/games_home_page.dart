@@ -51,7 +51,10 @@ class _GamesHomePageState extends State<GamesHomePage> {
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
-          builder: (_) => TetrisPage(blankPenalty: settings.blankPenalty)),
+          builder: (_) => TetrisPage(
+                blankPenalty: settings.blankPenalty,
+                fallSeconds: settings.tetrisFallSeconds.toDouble(),
+              )),
     );
   }
 

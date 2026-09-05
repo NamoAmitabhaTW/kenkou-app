@@ -57,7 +57,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
                   child: Text(
-                    '吃金幣設定',
+                    '小遊戲設定',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -82,6 +82,15 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                   min: kMinCellsPerCommand,
                   max: kMaxCellsPerCommand,
                   onChanged: (v) => _update(s.copyWith(cellsPerCommand: v)),
+                ),
+                NumberSettingRow(
+                  icon: Icons.view_agenda_outlined,
+                  label: '方塊多久掉一格:',
+                  unit: '秒',
+                  value: s.tetrisFallSeconds,
+                  min: kMinTetrisFallSeconds,
+                  max: kMaxTetrisFallSeconds,
+                  onChanged: (v) => _update(s.copyWith(tetrisFallSeconds: v)),
                 ),
                 const SizedBox(height: 12),
               ],

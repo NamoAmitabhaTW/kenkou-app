@@ -42,10 +42,17 @@ enum _Phase { loading, playing, finished }
 /// 方塊自己慢慢往下掉,使用者喊 怕 / 踏 / 卡 / 啦 操控。麥克風的 PCM 直接
 /// 餵給 [PatakaDetector],跟吃金幣走同一條路。
 class TetrisPage extends StatefulWidget {
-  const TetrisPage({super.key, required this.blankPenalty});
+  const TetrisPage({
+    super.key,
+    required this.blankPenalty,
+    required this.fallSeconds,
+  });
 
   /// 語音靈敏度換算來的值,跟吃金幣共用同一個設定。
   final double blankPenalty;
+
+  /// 方塊多久掉一格,秒。設定頁調的。
+  final double fallSeconds;
 
   @override
   State<TetrisPage> createState() => _TetrisPageState();
@@ -53,7 +60,9 @@ class TetrisPage extends StatefulWidget {
 
 class _TetrisPageState extends State<TetrisPage>
     with SingleTickerProviderStateMixin {
-  TetrisGame _game = TetrisGame();
+  late TetrisGame _game = _newGame();
+
+  TetrisGame _newGame() => TetrisGame(fallSeconds: widget.fallSeconds);
 
   /// 不要寫成 late final ...()..start() —— late 是第一次被讀到才初始化,
   /// 這個欄位除了 dispose 沒人讀,ticker 會整局都沒開。
@@ -163,7 +172,7 @@ class _TetrisPageState extends State<TetrisPage>
 
   void _restart() {
     setState(() {
-      _game = TetrisGame();
+      _game = _newGame();
       _phase = _Phase.playing;
     });
     if (_mic == null && _detector != null) _startMic();

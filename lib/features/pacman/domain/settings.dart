@@ -6,14 +6,20 @@ const kMinCellsPerSecond = 1.0;
 const kMaxCellsPerSecond = 6.0;
 const kMinCellsPerCommand = 1;
 const kMaxCellsPerCommand = 3;
+const kMinTetrisFallSeconds = 1;
+const kMaxTetrisFallSeconds = 6;
 
-/// 吃金幣遊戲的設定,收在首頁右上角的齒輪後面。
+/// 小遊戲分頁的設定,收在首頁右上角的齒輪後面。
+///
+/// 兩個遊戲共用一份 —— 語音靈敏度本來就該一致(同一顆模型、同一個刻度),
+/// 各自獨立的項目就多一個欄位。
 class PacmanSettings {
   const PacmanSettings({
     this.gameSeconds = 30,
     this.cellsPerSecond = 3,
     this.voiceSensitivity = kDefaultVoiceSensitivity,
     this.cellsPerCommand = 2,
+    this.tetrisFallSeconds = 3,
     this.showDebug = false,
   });
 
@@ -32,6 +38,11 @@ class PacmanSettings {
   /// 所以念一次剛好停在下一個路口上,不會衝過頭。
   final int cellsPerCommand;
 
+  /// 俄羅斯方塊的方塊多久掉一格,秒。
+  ///
+  /// 語音慢半拍,掉太快來不及喊完、看到反應、再決定下一步。
+  final int tetrisFallSeconds;
+
   /// 在畫面上顯示辨識器聽到什麼。調參數時用。
   final bool showDebug;
 
@@ -43,6 +54,7 @@ class PacmanSettings {
     double? cellsPerSecond,
     int? voiceSensitivity,
     int? cellsPerCommand,
+    int? tetrisFallSeconds,
     bool? showDebug,
   }) {
     return PacmanSettings(
@@ -50,6 +62,7 @@ class PacmanSettings {
       cellsPerSecond: cellsPerSecond ?? this.cellsPerSecond,
       voiceSensitivity: voiceSensitivity ?? this.voiceSensitivity,
       cellsPerCommand: cellsPerCommand ?? this.cellsPerCommand,
+      tetrisFallSeconds: tetrisFallSeconds ?? this.tetrisFallSeconds,
       showDebug: showDebug ?? this.showDebug,
     );
   }
@@ -59,6 +72,7 @@ class PacmanSettings {
         'cellsPerSecond': cellsPerSecond,
         'voiceSensitivity': voiceSensitivity,
         'cellsPerCommand': cellsPerCommand,
+        'tetrisFallSeconds': tetrisFallSeconds,
         'showDebug': showDebug,
       };
 
@@ -75,6 +89,9 @@ class PacmanSettings {
           ((json['voiceSensitivity'] as num?)?.toInt() ?? defaults.voiceSensitivity)
               .clamp(kMinVoiceSensitivity, kMaxVoiceSensitivity),
       cellsPerCommand: _readCellsPerCommand(json, defaults.cellsPerCommand),
+      tetrisFallSeconds:
+          ((json['tetrisFallSeconds'] as num?)?.toInt() ?? defaults.tetrisFallSeconds)
+              .clamp(kMinTetrisFallSeconds, kMaxTetrisFallSeconds),
       showDebug: json['showDebug'] as bool? ?? defaults.showDebug,
     );
   }
