@@ -11,6 +11,9 @@ const kBrandGreen = Color(0xFF4A9D7E);
 /// 亮綠。畫在相機畫面上的東西用它 —— 比主色亮,壓在人臉上才看得見。
 const kAccentGreen = Color(0xFF6FD8AE);
 
+/// 「有聽到你說話」的提示色。兩個語音遊戲共用同一個黃,回饋才一致。
+const kVoiceHighlight = Color(0xFFFFE600);
+
 /// 「做對了」的回饋底色。
 const kSuccessGreen = Color(0xFF2E7D5B);
 

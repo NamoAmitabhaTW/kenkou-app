@@ -260,13 +260,13 @@ class _TetrisPageState extends State<TetrisPage>
   }
 
   Widget _hintCell(TetrisMove move, bool highlighted) {
-    final color = highlighted ? kAccentGreen : Colors.white;
+    final color = highlighted ? kVoiceHighlight : Colors.white;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: highlighted
-            ? kAccentGreen.withValues(alpha: 0.2)
+            ? kVoiceHighlight.withValues(alpha: 0.2)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
       ),
@@ -282,7 +282,7 @@ class _TetrisPageState extends State<TetrisPage>
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: highlighted ? kAccentGreen : Colors.white70)),
+                  color: highlighted ? kVoiceHighlight : Colors.white70)),
         ],
       ),
     );

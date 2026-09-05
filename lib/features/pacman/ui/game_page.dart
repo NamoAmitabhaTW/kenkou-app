@@ -394,14 +394,14 @@ class _PacmanGamePageState extends State<PacmanGamePage>
   /// 三欄固定寬度,左右兩格的字才會上下對齊。聽到那個音時整格亮起來,
   /// 讓人知道「有聽到我說話」。
   Widget _hintCell(MoveDirection direction, bool highlighted) {
-    final color = highlighted ? kPacmanColor : Colors.white;
+    final color = highlighted ? kVoiceHighlight : Colors.white;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       margin: const EdgeInsets.symmetric(vertical: 3),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: highlighted
-            ? kPacmanColor.withValues(alpha: 0.22)
+            ? kVoiceHighlight.withValues(alpha: 0.22)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
@@ -424,7 +424,7 @@ class _PacmanGamePageState extends State<PacmanGamePage>
                 style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w900,
-                    color: highlighted ? kPacmanColor : kAccentGreen)),
+                    color: highlighted ? kVoiceHighlight : kAccentGreen)),
           ),
           SizedBox(
             width: 68,
