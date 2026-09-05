@@ -67,16 +67,16 @@ void main() {
 
     await boot(tester);
     for (final direction in MoveDirection.values) {
-      expect(find.text('「${direction.word}」'), findsOneWidget);
-      expect(find.text(direction.label), findsOneWidget);
+      expect(find.text(direction.word), findsOneWidget);
+      expect(find.text(direction.short), findsOneWidget);
     }
     expect(tester.takeException(), isNull, reason: '排版不能溢出');
 
     // 提示要真的完整落在畫面裡,不是被畫到螢幕外面。
     for (final direction in MoveDirection.values) {
-      final box = tester.getRect(find.text(direction.label));
+      final box = tester.getRect(find.text(direction.short));
       expect(box.right, lessThanOrEqualTo(390),
-          reason: '${direction.label} 被切掉了');
+          reason: '${direction.short} 被切掉了');
       expect(box.left, greaterThanOrEqualTo(0));
     }
   });

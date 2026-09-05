@@ -7,8 +7,11 @@ import '../domain/maze.dart';
 /// 街機的配色,直接照原版:牆是藍色、金幣是米色、小精靈是黃色。
 const kMazeWall = Color(0xFF2121DE);
 const kMazeBackground = Color(0xFF000000);
-const kCoinColor = Color(0xFFFFB8AE);
+const kCoinColor = Color(0xFFFFC24A);
 const kPacmanColor = Color(0xFFFFE600);
+// 金幣是金色、小精靈是更亮的黃 —— 遊戲叫「吃金幣」,豆子就該像金幣。
+// 兩者同色系但小精靈直徑是金幣的 4.4 倍、會動、還有缺口嘴巴,不會認錯;
+// 反過來把小精靈改成別的顏色,長輩就找不到「那個黃色的」了。
 
 /// 把迷宮畫出來。沒有怪物 —— 這個遊戲只有吃金幣。
 class MazePainter extends CustomPainter {

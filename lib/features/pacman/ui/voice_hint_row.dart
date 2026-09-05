@@ -5,15 +5,14 @@ import 'maze_painter.dart';
 
 /// 「念『怕』 ↑ 往上移動」的一列。
 ///
-/// 首頁和遊戲畫面共用,兩邊的說明才不會不一樣 —— 以前這個 widget 住在
-/// 首頁裡,遊戲畫面得反過來 import 首頁才拿得到它。
+/// 首頁的操控說明用。遊戲畫面改用自己的對照表(字更大、兩欄對齊),
+/// 那裡要的排版跟這裡不一樣,硬共用只會讓兩邊都難調。
 class VoiceHintRow extends StatelessWidget {
   const VoiceHintRow({
     super.key,
     required this.direction,
     required this.scheme,
     this.highlighted = false,
-    this.compact = false,
   });
 
   final MoveDirection direction;
@@ -21,15 +20,14 @@ class VoiceHintRow extends StatelessWidget {
 
   /// 剛剛聽到這個音,亮一下讓人知道有聽到。
   final bool highlighted;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final size = compact ? 17.0 : 21.0;
+    const size = 21.0;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
-      margin: EdgeInsets.symmetric(vertical: compact ? 2 : 5),
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: compact ? 4 : 6),
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: highlighted ? kPacmanColor.withValues(alpha: 0.22) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),

@@ -8,7 +8,6 @@ import '../../../core/media/mic_stream.dart';
 import '../../../core/ui/app_theme.dart';
 import '../../../core/ui/overlays.dart';
 import '../../../core/voice/pataka_detector.dart';
-import 'voice_hint_row.dart';
 import '../domain/maze.dart';
 import 'maze_painter.dart';
 import '../domain/settings.dart';
@@ -241,7 +240,14 @@ class _PacmanGamePageState extends State<PacmanGamePage>
                       if (_phase == _Phase.countdown)
                         ColoredBox(
                           color: Colors.black.withValues(alpha: 0.7),
-                          child: Center(child: _countdownBody()),
+                          // 提示表格放大之後迷宮那塊變矮,倒數的「3」是 120pt,
+                          // 在小螢幕上會撐破。讓它在放不下時自己縮。
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: _countdownBody(),
+                            ),
+                          ),
                         ),
                     ],
                   ),
@@ -264,71 +270,69 @@ class _PacmanGamePageState extends State<PacmanGamePage>
     final left = _secondsLeft;
     final hurry = left <= 5;
 
+    // 顆數與分數用 FittedBox 包住:金幣吃滿時分數會到四位數,放大字級之後
+    // 固定排版一定會爆版,讓它在放不下的時候自己縮,而不是畫面壞掉。
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 4, 16, 8),
-      child: Column(
+      child: Row(
         children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close, color: Colors.white70),
+            iconSize: 30,
+            tooltip: '離開',
+          ),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  const Icon(Icons.circle, color: kCoinColor, size: 22),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${_game.coinsEaten}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 46,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const Text(' 顆',
+                      style: TextStyle(color: Colors.white70, fontSize: 20)),
+                  const SizedBox(width: 16),
+                  Text(
+                    '${_game.score} 分',
+                    style: const TextStyle(
+                      color: kCoinColor,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close, color: Colors.white70),
-                iconSize: 30,
-                tooltip: '離開',
-              ),
-              const Icon(Icons.circle, color: kCoinColor, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                '${_game.coinsEaten}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 34,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(left: 4, bottom: 5),
-                child: Text('顆',
-                    style: TextStyle(color: Colors.white54, fontSize: 15)),
-              ),
-              const SizedBox(width: 14),
-              Text(
-                '${_game.score} 分',
-                style: const TextStyle(
-                  color: kCoinColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              Icon(Icons.timer_outlined,
-                  color: hurry ? Colors.redAccent : Colors.white54, size: 22),
-              const SizedBox(width: 6),
               Text(
                 left.ceil().toString(),
                 style: TextStyle(
                   color: hurry ? Colors.redAccent : Colors.white,
-                  fontSize: 34,
+                  fontSize: 46,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(left: 4, bottom: 5),
-                child: Text('秒',
-                    style: TextStyle(color: Colors.white54, fontSize: 15)),
-              ),
+              Text(' 秒',
+                  style: TextStyle(
+                      color: hurry ? Colors.redAccent : Colors.white70,
+                      fontSize: 20)),
             ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: left / widget.settings.gameSeconds,
-              minHeight: 6,
-              backgroundColor: Colors.white12,
-              valueColor: AlwaysStoppedAnimation(
-                  hurry ? Colors.redAccent : kPacmanColor),
-            ),
           ),
         ],
       ),
@@ -338,37 +342,50 @@ class _PacmanGamePageState extends State<PacmanGamePage>
   // MARK: 下方:操控提示
 
   Widget _hints() {
-    final scheme = Theme.of(context).colorScheme;
     // 亮 0.8 秒。太短會來不及看到,太長會分不出是哪一次。
     final recent = _clock - _lastDirectionAt < 0.8;
+    Widget cell(MoveDirection d) =>
+        _hintCell(d, recent && _lastDirection == d);
 
-    Widget row(MoveDirection direction) => VoiceHintRow(
-          direction: direction,
-          scheme: scheme,
-          compact: true,
-          highlighted: recent && _lastDirection == direction,
-        );
-
+    // 排成兩欄三列而不是四列 —— 四列吃掉太多高度,迷宮被壓到看不清楚。
+    // 「一次念一聲」放最上面當標題,它是唯一的操作規則。
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
       color: Colors.white10,
       child: Column(
-        // 一行一個方向。排成兩欄雖然省高度,但「往下移動」四個字加上前面的
-        // 「念『拉』↓」在半個螢幕寬裡放不下,右邊會被切掉;迷宮是等比例縮放的,
-        // 上下本來就有空位,寧可把高度讓給提示。
-        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          for (final direction in MoveDirection.values) row(direction),
+          const Text('一次念一聲',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800)),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              cell(MoveDirection.up),
+              cell(MoveDirection.left),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              cell(MoveDirection.right),
+              cell(MoveDirection.down),
+            ],
+          ),
           if (_voiceError != null)
             Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: 4),
               child: Text(_voiceError!,
-                  style: const TextStyle(color: Colors.orangeAccent, fontSize: 13)),
+                  style:
+                      const TextStyle(color: Colors.orangeAccent, fontSize: 14)),
             ),
           if (widget.settings.showDebug)
             Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: 4),
               child: Text(
                 '聽到:${_detector?.lastHeard ?? '-'}',
                 maxLines: 1,
@@ -376,6 +393,55 @@ class _PacmanGamePageState extends State<PacmanGamePage>
                 style: const TextStyle(color: Colors.white38, fontSize: 12),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  /// 對照表的一格:念的字、箭頭、往哪走。
+  ///
+  /// 三欄固定寬度,左右兩格的字才會上下對齊。聽到那個音時整格亮起來,
+  /// 讓人知道「有聽到我說話」。
+  Widget _hintCell(MoveDirection direction, bool highlighted) {
+    final color = highlighted ? kPacmanColor : Colors.white;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      margin: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: highlighted
+            ? kPacmanColor.withValues(alpha: 0.22)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 44,
+            child: Text(direction.word,
+                textAlign: TextAlign.center,
+                softWrap: false,
+                style: TextStyle(
+                    fontSize: 32, fontWeight: FontWeight.w900, color: color)),
+          ),
+          SizedBox(
+            width: 34,
+            child: Text(direction.arrow,
+                textAlign: TextAlign.center,
+                softWrap: false,
+                style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: highlighted ? kPacmanColor : kAccentGreen)),
+          ),
+          SizedBox(
+            width: 68,
+            child: Text(direction.short,
+                softWrap: false,
+                style: TextStyle(
+                    fontSize: 24, fontWeight: FontWeight.w700, color: color)),
+          ),
         ],
       ),
     );
@@ -402,7 +468,8 @@ class _PacmanGamePageState extends State<PacmanGamePage>
         ),
         const SizedBox(height: 8),
         const Text('要開始囉！',
-            style: TextStyle(color: Colors.white70, fontSize: 20)),
+            style: TextStyle(
+                color: Colors.white, fontSize: 40, fontWeight: FontWeight.w800)),
       ],
     );
   }
