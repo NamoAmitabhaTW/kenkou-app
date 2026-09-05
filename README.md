@@ -30,7 +30,7 @@
 | 原生橋接 | **MethodChannel / EventChannel / PlatformView** | 三種各有職責:**MethodChannel** 送一次性指令(開始、停止);**EventChannel** 讓原生端持續推偵測結果,不必由 Dart 端輪詢;**PlatformView** 把原生相機預覽直接嵌進 Flutter 畫面,不必每張影格搬回 Dart |
 
 
-## 安裝與執行       
+## 安裝與執行
 
 
 ## 作品展示
@@ -48,7 +48,7 @@
 | MediaPipe Tasks Vision(iOS Pod) | [google-ai-edge/mediapipe](https://github.com/google-ai-edge/mediapipe) | Apache-2.0 |
 | `face_landmarker.task` 模型 | [MediaPipe Face Landmarker model card](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker) | Apache-2.0 |
 | sherpa-onnx(Dart/iOS 執行期) | [k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | Apache-2.0 |
-| 德文串流 ASR 模型<br/>`sherpa-onnx-streaming-zipformer-de-kroko-2025-08-06` | [sherpa-onnx asr-models releases](https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models) | Apache-2.0 |
+| `sherpa-onnx-streaming-zipformer-de-kroko-2025-08-06` | [sherpa-onnx asr-models releases](https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models) | Apache-2.0 |
 | `record` 6.2.1 | pub.dev | BSD-3-Clause |
 | `audioplayers` 6.7.1 | pub.dev | MIT |
 | `image_picker` 1.2.2 | pub.dev | Apache-2.0 |
