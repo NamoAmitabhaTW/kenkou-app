@@ -158,6 +158,9 @@ void main() {
       expect(germanSyllable('Pa,'), 'pa');
       expect(germanSyllable('paar'), 'pa');
       expect(germanSyllable('K'), 'ka');
+      // 模型有時只吐一個字母,大小寫都要算(正規化會先轉小寫)。
+      expect(germanSyllable('T'), 'ta');
+      expect(germanSyllable('t'), 'ta');
       expect(germanSyllable('ra.'), 'la');
       expect(germanSyllable('Train'), isNull);
       expect(germanSyllable(''), isNull);
