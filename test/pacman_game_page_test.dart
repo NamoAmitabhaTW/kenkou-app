@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futuremode2026/features/pacman/domain/maze.dart';
 import 'package:futuremode2026/features/pacman/ui/game_page.dart';
-import 'package:futuremode2026/features/pacman/domain/settings.dart';
+import 'package:futuremode2026/core/game_settings.dart';
 
 void main() {
   // 一格一格推,不能用 pumpAndSettle:ticker 永遠不會停,pumpAndSettle 會卡死。
@@ -18,7 +18,7 @@ void main() {
   // 照樣把遊戲跑完 —— 這正好也順便驗到那條退路是通的。
   Future<void> boot(WidgetTester tester, {int gameSeconds = 30}) async {
     await tester.pumpWidget(MaterialApp(
-      home: PacmanGamePage(settings: PacmanSettings(gameSeconds: gameSeconds)),
+      home: PacmanGamePage(settings: GameSettings(gameSeconds: gameSeconds)),
     ));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));

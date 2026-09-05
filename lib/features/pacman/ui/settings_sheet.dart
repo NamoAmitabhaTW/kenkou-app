@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/ui/number_setting_row.dart';
-import '../domain/settings.dart';
+import '../../../core/game_settings.dart';
 import '../data/settings_store.dart';
 
 /// 右上角齒輪打開的設定。跟健口操一樣改動即時存檔,關掉就生效。
-Future<void> showPacmanSettingsSheet(
+Future<void> showGameSettingsSheet(
   BuildContext context, {
-  required PacmanSettings settings,
-  required PacmanSettingsStore store,
+  required GameSettings settings,
+  required GameSettingsStore store,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -22,17 +22,17 @@ Future<void> showPacmanSettingsSheet(
 class _SettingsSheet extends StatefulWidget {
   const _SettingsSheet({required this.settings, required this.store});
 
-  final PacmanSettings settings;
-  final PacmanSettingsStore store;
+  final GameSettings settings;
+  final GameSettingsStore store;
 
   @override
   State<_SettingsSheet> createState() => _SettingsSheetState();
 }
 
 class _SettingsSheetState extends State<_SettingsSheet> {
-  late PacmanSettings _settings = widget.settings;
+  late GameSettings _settings = widget.settings;
 
-  void _update(PacmanSettings next) {
+  void _update(GameSettings next) {
     setState(() => _settings = next);
     // 每改一格就存 —— 關掉 sheet 的方式太多(往下滑、點外面),等關閉才存會漏。
     widget.store.save(next);

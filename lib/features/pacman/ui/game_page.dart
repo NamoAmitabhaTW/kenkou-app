@@ -10,7 +10,7 @@ import '../../../core/ui/overlays.dart';
 import '../../../core/voice/pataka_detector.dart';
 import '../domain/maze.dart';
 import 'maze_painter.dart';
-import '../domain/settings.dart';
+import '../../../core/game_settings.dart';
 
 enum _Phase { loading, countdown, playing, finished }
 
@@ -28,7 +28,7 @@ const _countdownSeconds = 3;
 class PacmanGamePage extends StatefulWidget {
   const PacmanGamePage({super.key, required this.settings});
 
-  final PacmanSettings settings;
+  final GameSettings settings;
 
   @override
   State<PacmanGamePage> createState() => _PacmanGamePageState();

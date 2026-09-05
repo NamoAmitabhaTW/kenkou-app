@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/ui/app_theme.dart';
 import 'features/pacman/data/settings_store.dart';
-import 'features/pacman/domain/settings.dart';
+import 'core/game_settings.dart';
 import 'features/pacman/ui/game_page.dart';
 import 'features/pacman/ui/settings_sheet.dart';
 import 'features/tetris/ui/tetris_page.dart';
@@ -20,8 +20,8 @@ class GamesHomePage extends StatefulWidget {
 }
 
 class _GamesHomePageState extends State<GamesHomePage> {
-  final _store = PacmanSettingsStore();
-  PacmanSettings? _settings;
+  final _store = GameSettingsStore();
+  GameSettings? _settings;
 
   @override
   void initState() {
@@ -61,7 +61,7 @@ class _GamesHomePageState extends State<GamesHomePage> {
   Future<void> _openSettings() async {
     final settings = _settings;
     if (settings == null) return;
-    await showPacmanSettingsSheet(context, settings: settings, store: _store);
+    await showGameSettingsSheet(context, settings: settings, store: _store);
     await _reload();
   }
 

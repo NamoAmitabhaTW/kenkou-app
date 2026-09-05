@@ -1,4 +1,4 @@
-import '../../../core/voice/voice_sensitivity.dart';
+import 'voice/voice_sensitivity.dart';
 
 const kMinGameSeconds = 10;
 const kMaxGameSeconds = 180;
@@ -11,10 +11,13 @@ const kMaxTetrisFallSeconds = 6;
 
 /// 小遊戲分頁的設定,收在首頁右上角的齒輪後面。
 ///
-/// 兩個遊戲共用一份 —— 語音靈敏度本來就該一致(同一顆模型、同一個刻度),
-/// 各自獨立的項目就多一個欄位。
-class PacmanSettings {
-  const PacmanSettings({
+/// 吃金幣和俄羅斯方塊共用一份 —— 語音靈敏度本來就該一致(同一顆模型、
+/// 同一個刻度),各自獨立的項目就多一個欄位。
+///
+/// 放在 core 而不是任何一個 feature 底下:兩個 feature 都要用,擺進其中一邊
+/// 就會讓另一邊得跨 feature 引用,架構測試會擋。
+class GameSettings {
+  const GameSettings({
     this.gameSeconds = 30,
     this.cellsPerSecond = 3,
     this.voiceSensitivity = kDefaultVoiceSensitivity,
@@ -49,7 +52,7 @@ class PacmanSettings {
   /// 換算表跟健口操共用,見 [blankPenaltyFor]。
   double get blankPenalty => blankPenaltyFor(voiceSensitivity);
 
-  PacmanSettings copyWith({
+  GameSettings copyWith({
     int? gameSeconds,
     double? cellsPerSecond,
     int? voiceSensitivity,
@@ -57,7 +60,7 @@ class PacmanSettings {
     int? tetrisFallSeconds,
     bool? showDebug,
   }) {
-    return PacmanSettings(
+    return GameSettings(
       gameSeconds: gameSeconds ?? this.gameSeconds,
       cellsPerSecond: cellsPerSecond ?? this.cellsPerSecond,
       voiceSensitivity: voiceSensitivity ?? this.voiceSensitivity,
@@ -77,9 +80,9 @@ class PacmanSettings {
       };
 
   /// 每個數字都夾回合法範圍 —— 設定檔可能是舊版本寫的,也可能被手動改過。
-  factory PacmanSettings.fromJson(Map<String, Object?> json) {
-    const defaults = PacmanSettings();
-    return PacmanSettings(
+  factory GameSettings.fromJson(Map<String, Object?> json) {
+    const defaults = GameSettings();
+    return GameSettings(
       gameSeconds: ((json['gameSeconds'] as num?)?.toInt() ?? defaults.gameSeconds)
           .clamp(kMinGameSeconds, kMaxGameSeconds),
       cellsPerSecond:
