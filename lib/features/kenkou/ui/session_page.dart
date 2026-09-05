@@ -36,8 +36,17 @@ enum SessionPhase {
   done,
 }
 
-/// 校正要收集幾張有臉的影格。約 1.5 秒 —— 再久長輩會以為卡住了。
-const _calibrationFrames = 45;
+/// 校正分兩段:「嘴巴閉起來」3 秒,再「放鬆」2 秒,共 5 秒。
+///
+/// 前段只是請使用者把嘴閉起來、把臉擺正,收到的影格不算數;後段才收「放鬆」
+/// 時的臉當基準。原本是收滿 45 張(約 1.5 秒)就結束,長輩還沒擺好姿勢就抓完了,
+/// 基準會被「還在動的臉」汙染。
+const _calibrationPrepare = Duration(seconds: 3);
+const _calibrationTotal = Duration(seconds: 5);
+
+/// 後段至少要收到這麼多張有臉的影格才算數。時間到了但臉一直偵測不到,
+/// 就繼續等 —— 拿空的基準去判定比多等幾秒糟得多。
+const _calibrationMinFrames = 20;
 
 /// 按下「開始」之後,依序做完整套健口操的畫面。
 ///
@@ -90,6 +99,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
   FaceFrame _frame = const FaceFrame(hasFace: false);
   double _targetScore = 0;
   List<FaceFrame>? _calibrationBuffer;
+  DateTime? _calibrationStartedAt;
 
   /// 最近每張影格「嘴唇有沒有閉著」。パタカラ 用來判斷剛才那個音是不是 パ。
   final _lipsHistory = <(DateTime, bool)>[];
@@ -162,6 +172,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     setState(() {
       _phase = SessionPhase.calibrating;
       _calibrationBuffer = [];
+      _calibrationStartedAt = DateTime.now();
     });
   }
 
@@ -232,16 +243,30 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
   /// 假牙都會影響),不先記下這個底,判定門檻就得為每個人重調。
   void _collectCalibrationFrame(FaceFrame frame) {
     final buffer = _calibrationBuffer!;
-    if (frame.hasFace) buffer.add(frame);
-    if (buffer.length >= _calibrationFrames) {
+    final elapsed = _calibrationElapsed;
+    // 前段收到的臉不算 —— 那時候使用者還在把嘴閉起來。
+    if (elapsed >= _calibrationPrepare && frame.hasFace) buffer.add(frame);
+    if (elapsed >= _calibrationTotal && buffer.length >= _calibrationMinFrames) {
       _classifier.calibrate(buffer);
       _lips.calibrate(buffer);
       _calibrationBuffer = null;
+      _calibrationStartedAt = null;
       _phase = SessionPhase.running;
       _enterStep();
     }
     setState(() => _frame = frame);
   }
+
+  Duration get _calibrationElapsed => _calibrationStartedAt == null
+      ? Duration.zero
+      : DateTime.now().difference(_calibrationStartedAt!);
+
+  /// 兩句一起顯示,不要換來換去 —— 長輩正在看鏡頭調整姿勢,字一變就得重新讀。
+  static const _calibrationHeadline = '嘴巴閉起來\n放鬆';
+
+  double get _calibrationProgress =>
+      (_calibrationElapsed.inMilliseconds / _calibrationTotal.inMilliseconds)
+          .clamp(0.0, 1.0);
 
   /// 這個步驟在這張影格上做到幾分。頭沒擺正時一律 0 —— 側臉的分數只是假資料。
   double _scoreFor(ExerciseStep step, FaceFrame frame) {
@@ -516,8 +541,8 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
             const ColoredBox(color: Colors.black87, child: PreparingView()),
           if (_phase == SessionPhase.calibrating)
             CalibrationOverlay(
-              collected: _calibrationBuffer?.length ?? 0,
-              needed: _calibrationFrames,
+              headline: _calibrationHeadline,
+              progress: _calibrationProgress,
               hasFace: _frame.hasFace,
             ),
           if (_cameraError != null) CameraErrorOverlay(message: _cameraError!),

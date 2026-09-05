@@ -148,57 +148,53 @@ class ThumbOverlay extends StatelessWidget {
 class CalibrationOverlay extends StatelessWidget {
   const CalibrationOverlay({
     super.key,
-    required this.collected,
-    required this.needed,
+    required this.headline,
+    required this.progress,
     required this.hasFace,
   });
 
-  final int collected;
-  final int needed;
+  /// 現在要使用者做什麼。字很大 —— 這是整段校正唯一要讀的東西。
+  final String headline;
+
+  /// 0~1,整段校正走到哪了。
+  final double progress;
+
   final bool hasFace;
 
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: Colors.black54,
+      color: Colors.black87,
       child: Center(
-        child: Container(
-          margin: const EdgeInsets.all(32),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.black87,
-            borderRadius: BorderRadius.circular(20),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('先放鬆閉上嘴,正對鏡頭',
+              Text(headline,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800)),
-              const SizedBox(height: 8),
-              const Text('記一下你放鬆時的樣子,等一下判定才準',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 15)),
-              const SizedBox(height: 24),
+                      fontSize: 56,
+                      fontWeight: FontWeight.w900,
+                      height: 1.1)),
+              const SizedBox(height: 32),
               SizedBox(
-                width: 200,
+                width: 220,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
-                    value: needed == 0 ? 0 : collected / needed,
-                    minHeight: 10,
+                    value: progress,
+                    minHeight: 12,
                     backgroundColor: Colors.white12,
                     valueColor: const AlwaysStoppedAnimation(kAccentGreen),
                   ),
                 ),
               ),
               if (!hasFace) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 const Text('沒有偵測到臉',
-                    style: TextStyle(color: Colors.redAccent, fontSize: 14)),
+                    style: TextStyle(color: Colors.redAccent, fontSize: 18)),
               ],
             ],
           ),
