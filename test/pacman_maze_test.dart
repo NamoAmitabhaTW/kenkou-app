@@ -185,10 +185,10 @@ void main() {
   test('四個音節各對到一個方向,沒有重複', () {
     expect(kDirectionBySyllable.keys.toSet(), Syllable.values.toSet());
     expect(kDirectionBySyllable.values.toSet(), MoveDirection.values.toSet());
-    expect(kDirectionBySyllable[Syllable.pa], MoveDirection.up);
-    expect(kDirectionBySyllable[Syllable.ta], MoveDirection.left);
-    expect(kDirectionBySyllable[Syllable.ka], MoveDirection.right);
-    expect(kDirectionBySyllable[Syllable.ra], MoveDirection.down);
+    expect(kDirectionBySyllable[Syllable.pa], MoveDirection.left);
+    expect(kDirectionBySyllable[Syllable.ta], MoveDirection.right);
+    expect(kDirectionBySyllable[Syllable.ka], MoveDirection.down);
+    expect(kDirectionBySyllable[Syllable.ra], MoveDirection.up);
   });
 
   test('念的字都對得回同一個音節', () {
@@ -196,10 +196,10 @@ void main() {
       expect(entry.value.word, isNotEmpty);
     }
     // 「怕踏卡拉」必須真的在中文對照表裡,不然辨識到了也對不回來。
-    expect(MoveDirection.up.word, '怕');
-    expect(MoveDirection.left.word, '踏');
-    expect(MoveDirection.right.word, '卡');
-    expect(MoveDirection.down.word, '啦');
+    expect(MoveDirection.left.word, '怕');
+    expect(MoveDirection.right.word, '踏');
+    expect(MoveDirection.down.word, '卡');
+    expect(MoveDirection.up.word, '啦');
   });
 }
 

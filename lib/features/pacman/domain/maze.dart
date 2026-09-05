@@ -10,10 +10,10 @@ enum Tile { wall, floor, coin, power }
 /// 四個音就是健口操在練的那四個,辨識器(`PatakaDetector`)也只認得這四個。
 /// 顯示的字直接取自 [Syllable.label] —— 兩邊共用同一份標示,不會各自漂移。
 enum MoveDirection {
-  up(dx: 0, dy: -1, syllable: Syllable.pa, label: '往上移動', short: '往上', arrow: '↑'),
-  left(dx: -1, dy: 0, syllable: Syllable.ta, label: '往左移動', short: '往左', arrow: '←'),
-  right(dx: 1, dy: 0, syllable: Syllable.ka, label: '往右移動', short: '往右', arrow: '→'),
-  down(dx: 0, dy: 1, syllable: Syllable.ra, label: '往下移動', short: '往下', arrow: '↓');
+  up(dx: 0, dy: -1, syllable: Syllable.ra, label: '往上移動', short: '往上', arrow: '↑'),
+  left(dx: -1, dy: 0, syllable: Syllable.pa, label: '往左移動', short: '往左', arrow: '←'),
+  right(dx: 1, dy: 0, syllable: Syllable.ta, label: '往右移動', short: '往右', arrow: '→'),
+  down(dx: 0, dy: 1, syllable: Syllable.ka, label: '往下移動', short: '往下', arrow: '↓');
 
   const MoveDirection({
     required this.dx,
