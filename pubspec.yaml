@@ -43,7 +43,7 @@ flutter:
 
   # パタカラ 語音辨識用的 sherpa-onnx 德文串流 ASR 模型與熱詞,見 assets/asr/README.md。
   assets:
-    - assets/asr/de/encoder.int8.onnx
+    - assets/asr/de/encoder.onnx
     - assets/asr/de/decoder.onnx
     - assets/asr/de/joiner.onnx
     - assets/asr/de/tokens.txt

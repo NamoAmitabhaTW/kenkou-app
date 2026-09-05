@@ -33,7 +33,7 @@ void main(List<String> args) {
     'de': (
       sherpa.OnlineModelConfig(
         transducer: const sherpa.OnlineTransducerModelConfig(
-          encoder: 'assets/asr/de/encoder.int8.onnx',
+          encoder: 'assets/asr/de/encoder.onnx',
           decoder: 'assets/asr/de/decoder.onnx',
           joiner: 'assets/asr/de/joiner.onnx',
         ),

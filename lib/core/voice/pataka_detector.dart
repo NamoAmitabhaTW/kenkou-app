@@ -57,7 +57,7 @@ class PatakaDetector {
   }) async {
     sherpa.initBindings();
     final deDir = await _materialize('assets/asr/de', const [
-      'encoder.int8.onnx',
+      'encoder.onnx',
       'decoder.onnx',
       'joiner.onnx',
       'tokens.txt',
@@ -68,7 +68,7 @@ class PatakaDetector {
       sherpa.OnlineRecognizer(_config(
         sherpa.OnlineModelConfig(
           transducer: sherpa.OnlineTransducerModelConfig(
-            encoder: '$deDir/encoder.int8.onnx',
+            encoder: '$deDir/encoder.onnx',
             decoder: '$deDir/decoder.onnx',
             joiner: '$deDir/joiner.onnx',
           ),
