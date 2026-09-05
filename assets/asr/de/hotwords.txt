@@ -1,11 +1,2 @@
-Pa
-Paar
-Ta
-T
-t
-ta
-Ka
-K
-k
-La
-la
+Ta :8.0
+ta :8.0
