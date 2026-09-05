@@ -390,7 +390,7 @@ class _PacmanGamePageState extends State<PacmanGamePage>
               color: kPacmanColor, fontSize: 120, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 8),
-        const Text('準備好了就開口',
+        const Text('要開始囉！',
             style: TextStyle(color: Colors.white70, fontSize: 20)),
       ],
     );

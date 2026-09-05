@@ -26,21 +26,21 @@ void main() {
 
   testWidgets('倒數完會自己開始,不會停在「3」', (tester) async {
     await boot(tester);
-    expect(find.text('準備好了就開口'), findsOneWidget);
+    expect(find.text('要開始囉！'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
 
     await pumpFor(tester, 1.1);
     expect(find.text('2'), findsOneWidget, reason: '倒數要真的在動');
 
     await pumpFor(tester, 2.2);
-    expect(find.text('準備好了就開口'), findsNothing, reason: '倒數完就直接開始');
+    expect(find.text('要開始囉！'), findsNothing, reason: '倒數完就直接開始');
   });
 
   testWidgets('開場倒數的時候,遊戲計時還不能開始扣', (tester) async {
     await boot(tester);
     expect(find.text('30'), findsOneWidget);
     await pumpFor(tester, 2.0); // 還在開場倒數
-    expect(find.text('準備好了就開口'), findsOneWidget);
+    expect(find.text('要開始囉！'), findsOneWidget);
     expect(find.text('30'), findsOneWidget, reason: '還沒開始玩就不該扣秒數');
   });
 
