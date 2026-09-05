@@ -88,13 +88,16 @@ const kPowerScore = 50;
 /// 吃金幣遊戲的規則,純 Dart 不碰 UI —— 走位、轉彎、吃金幣全部在這裡,
 /// 頁面只負責把 [x] / [y] 畫出來,以及把聽到的音節轉成 [turn]。
 ///
-/// 小精靈是「一路走到底」的:念一次「卡」就一直往右走到撞牆,不用一直念。
-/// 語音辨識本來就慢半拍,要求每走一格念一次會完全跟不上。
+/// 念一次走 [cellsPerCommand] 格就停下來等下一個指令。
+///
+/// 早期是「一路走到底」,但地圖左右兩端上方都是牆 —— 從起點喊「卡」或「踏」
+/// 走到底都會卡進死角,只剩掉頭一條路。改成固定格數之後,小精靈停著等你,
+/// 語音辨識慢半拍就不再是「錯過路口」而只是「慢一點才動」。
 class MazeGame {
   MazeGame({
     List<String> layout = kDefaultMaze,
     this.cellsPerSecond = 3,
-    this.stepMove = false,
+    this.cellsPerCommand = 2,
   })  : width = layout.first.length,
         height = layout.length {
     var start = const _Point(1, 1);
@@ -134,8 +137,11 @@ class MazeGame {
   /// 一秒走幾格。
   final double cellsPerSecond;
 
-  /// true = 念一次只走一格。給覺得「一直跑」太快的人用。
-  final bool stepMove;
+  /// 念一次走幾格。
+  final int cellsPerCommand;
+
+  /// 這個指令還剩幾格可以走。走完歸零就停下來。
+  int _cellsLeft = 0;
 
   final _tiles = <List<Tile>>[];
 
@@ -193,6 +199,7 @@ class MazeGame {
       _moving = direction;
       _facing = direction;
       _queued = null;
+      _cellsLeft = cellsPerCommand;
       return;
     }
 
@@ -200,6 +207,7 @@ class MazeGame {
       _moving = direction;
       _facing = direction;
       _queued = null;
+      _cellsLeft = cellsPerCommand;
       return;
     }
 
@@ -233,10 +241,13 @@ class MazeGame {
       _queued = null;
       _moving = queued;
       _facing = queued;
+      // 排隊的是一個新指令,額度重新算。
+      _cellsLeft = cellsPerCommand;
       return;
     }
-    // 一格模式走完就停,連續模式撞牆才停。
-    if (stepMove || !_canEnter(moving)) _moving = null;
+    // 剛走完一格,扣一格額度;扣完或撞牆就停。
+    _cellsLeft--;
+    if (_cellsLeft <= 0 || !_canEnter(moving)) _moving = null;
   }
 
   bool _canEnter(MoveDirection direction) =>

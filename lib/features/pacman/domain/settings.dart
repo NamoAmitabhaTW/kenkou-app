@@ -4,6 +4,8 @@ const kMinGameSeconds = 10;
 const kMaxGameSeconds = 180;
 const kMinCellsPerSecond = 1.0;
 const kMaxCellsPerSecond = 6.0;
+const kMinCellsPerCommand = 1;
+const kMaxCellsPerCommand = 3;
 
 /// 吃金幣遊戲的設定,收在首頁右上角的齒輪後面。
 class PacmanSettings {
@@ -11,7 +13,7 @@ class PacmanSettings {
     this.gameSeconds = 30,
     this.cellsPerSecond = 3,
     this.voiceSensitivity = kDefaultVoiceSensitivity,
-    this.stepMove = false,
+    this.cellsPerCommand = 2,
     this.showDebug = false,
   });
 
@@ -24,8 +26,11 @@ class PacmanSettings {
   /// 語音靈敏度 1(遲鈍)~5(敏感),跟健口操同一套刻度。
   final int voiceSensitivity;
 
-  /// true = 念一次只走一格;false = 念一次一路走到撞牆。
-  final bool stepMove;
+  /// 念一次走幾格,走完就停下來等下一個指令。
+  ///
+  /// 預設 2:迷宮裡相鄰路口的間距多半就是 2 格(實測 16 處是 2、8 處是 4),
+  /// 所以念一次剛好停在下一個路口上,不會衝過頭。
+  final int cellsPerCommand;
 
   /// 在畫面上顯示辨識器聽到什麼。調參數時用。
   final bool showDebug;
@@ -37,14 +42,14 @@ class PacmanSettings {
     int? gameSeconds,
     double? cellsPerSecond,
     int? voiceSensitivity,
-    bool? stepMove,
+    int? cellsPerCommand,
     bool? showDebug,
   }) {
     return PacmanSettings(
       gameSeconds: gameSeconds ?? this.gameSeconds,
       cellsPerSecond: cellsPerSecond ?? this.cellsPerSecond,
       voiceSensitivity: voiceSensitivity ?? this.voiceSensitivity,
-      stepMove: stepMove ?? this.stepMove,
+      cellsPerCommand: cellsPerCommand ?? this.cellsPerCommand,
       showDebug: showDebug ?? this.showDebug,
     );
   }
@@ -53,7 +58,7 @@ class PacmanSettings {
         'gameSeconds': gameSeconds,
         'cellsPerSecond': cellsPerSecond,
         'voiceSensitivity': voiceSensitivity,
-        'stepMove': stepMove,
+        'cellsPerCommand': cellsPerCommand,
         'showDebug': showDebug,
       };
 
@@ -69,8 +74,22 @@ class PacmanSettings {
       voiceSensitivity:
           ((json['voiceSensitivity'] as num?)?.toInt() ?? defaults.voiceSensitivity)
               .clamp(kMinVoiceSensitivity, kMaxVoiceSensitivity),
-      stepMove: json['stepMove'] as bool? ?? defaults.stepMove,
+      cellsPerCommand: _readCellsPerCommand(json, defaults.cellsPerCommand),
       showDebug: json['showDebug'] as bool? ?? defaults.showDebug,
     );
   }
+}
+
+/// 讀「念一次走幾格」,順便把舊版的 stepMove 換算過來。
+///
+/// 舊版是布林:true = 只走一格、false = 一路走到撞牆。走到底那個模式已經拿掉
+/// (地圖左右兩端上方都是牆,走到底會卡在死角只能掉頭),所以換算成最大格數。
+int _readCellsPerCommand(Map<String, Object?> json, int fallback) {
+  final value = (json['cellsPerCommand'] as num?)?.toInt();
+  if (value != null) {
+    return value.clamp(kMinCellsPerCommand, kMaxCellsPerCommand);
+  }
+  final legacy = json['stepMove'] as bool?;
+  if (legacy != null) return legacy ? kMinCellsPerCommand : kMaxCellsPerCommand;
+  return fallback;
 }

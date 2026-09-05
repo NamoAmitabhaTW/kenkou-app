@@ -65,7 +65,7 @@ class _PacmanGamePageState extends State<PacmanGamePage>
 
   MazeGame _newGame() => MazeGame(
         cellsPerSecond: widget.settings.cellsPerSecond,
-        stepMove: widget.settings.stepMove,
+        cellsPerCommand: widget.settings.cellsPerCommand,
       );
 
   @override

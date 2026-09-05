@@ -65,7 +65,6 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                     ),
                   ),
                 ),
-                _heading(context, '遊戲'),
                 NumberSettingRow(
                   icon: Icons.timer_outlined,
                   label: '遊戲時限:',
@@ -75,43 +74,14 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                   max: kMaxGameSeconds,
                   onChanged: (v) => _update(s.copyWith(gameSeconds: v)),
                 ),
-                _SliderRow(
-                  icon: Icons.speed,
-                  label: '移動速度',
-                  valueLabel: '${s.cellsPerSecond.toStringAsFixed(1)} 格/秒',
-                  value: s.cellsPerSecond,
-                  min: kMinCellsPerSecond,
-                  max: kMaxCellsPerSecond,
-                  divisions: 10,
-                  onChanged: (v) => _update(s.copyWith(cellsPerSecond: v)),
-                ),
-                SwitchListTile(
-                  secondary: const Icon(Icons.directions_walk),
-                  title: const Text('念一次只走一格', style: TextStyle(fontSize: 17)),
-                  subtitle: const Text('關掉的話念一次會一路走到撞牆',
-                      style: TextStyle(fontSize: 13)),
-                  value: s.stepMove,
-                  onChanged: (v) => _update(s.copyWith(stepMove: v)),
-                ),
-                _heading(context, '判定'),
-                _SliderRow(
-                  icon: Icons.hearing,
-                  label: '語音靈敏度',
-                  valueLabel: '${s.voiceSensitivity}',
-                  value: s.voiceSensitivity.toDouble(),
-                  min: 1,
-                  max: 5,
-                  divisions: 4,
-                  onChanged: (v) =>
-                      _update(s.copyWith(voiceSensitivity: v.round())),
-                ),
-                SwitchListTile(
-                  secondary: const Icon(Icons.bug_report_outlined),
-                  title: const Text('顯示辨識結果', style: TextStyle(fontSize: 17)),
-                  subtitle: const Text('調參數時用,長輩玩的時候請關掉',
-                      style: TextStyle(fontSize: 13)),
-                  value: s.showDebug,
-                  onChanged: (v) => _update(s.copyWith(showDebug: v)),
+                NumberSettingRow(
+                  icon: Icons.directions_walk,
+                  label: '念一次走:',
+                  unit: '格',
+                  value: s.cellsPerCommand,
+                  min: kMinCellsPerCommand,
+                  max: kMaxCellsPerCommand,
+                  onChanged: (v) => _update(s.copyWith(cellsPerCommand: v)),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -122,70 +92,4 @@ class _SettingsSheetState extends State<_SettingsSheet> {
     );
   }
 
-  Widget _heading(BuildContext context, String text) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
-class _SliderRow extends StatelessWidget {
-  const _SliderRow({
-    required this.icon,
-    required this.label,
-    required this.valueLabel,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.divisions,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String label;
-  final String valueLabel;
-  final double value;
-  final double min;
-  final double max;
-  final int divisions;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 4, 16, 0),
-      child: Row(
-        children: [
-          Icon(icon),
-          const SizedBox(width: 16),
-          Text(label, style: const TextStyle(fontSize: 17)),
-          Expanded(
-            child: Slider(
-              value: value.clamp(min, max),
-              min: min,
-              max: max,
-              divisions: divisions,
-              onChanged: onChanged,
-            ),
-          ),
-          SizedBox(
-            width: 72,
-            child: Text(
-              valueLabel,
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

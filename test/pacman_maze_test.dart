@@ -74,8 +74,8 @@ void main() {
       '#...#',
       '#####',
     ];
-    MazeGame corridorGame({bool stepMove = false}) =>
-        MazeGame(layout: corridor, cellsPerSecond: 1, stepMove: stepMove);
+    MazeGame corridorGame({int cellsPerCommand = 2}) => MazeGame(
+        layout: corridor, cellsPerSecond: 1, cellsPerCommand: cellsPerCommand);
 
     test('停著不動的時候不會自己走', () {
       final game = corridorGame();
@@ -86,18 +86,26 @@ void main() {
       expect(game.isMoving, isFalse);
     });
 
-    test('念一次就一路走到撞牆', () {
+    test('念一次走設定的格數就停', () {
       final game = corridorGame()..turn(MoveDirection.right);
       game.update(10);
-      expect(game.x, 3); // 從 (1,1) 走到最右邊那格
+      expect(game.x, 3); // 從 (1,1) 走兩格
       expect(game.y, 1);
       expect(game.isMoving, isFalse);
     });
 
     test('一格模式念一次只走一格', () {
-      final game = corridorGame(stepMove: true)..turn(MoveDirection.right);
+      final game = corridorGame(cellsPerCommand: 1)..turn(MoveDirection.right);
       game.update(10);
       expect(game.x, 2);
+      expect(game.isMoving, isFalse);
+    });
+
+    test('格數還沒走完就撞牆的話,撞到就停', () {
+      // 走廊只到 x=3,從 x=1 出發設定走 3 格,第 3 格是牆。
+      final game = corridorGame(cellsPerCommand: 3)..turn(MoveDirection.right);
+      game.update(10);
+      expect(game.x, 3);
       expect(game.isMoving, isFalse);
     });
 
