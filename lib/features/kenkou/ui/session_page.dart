@@ -139,7 +139,18 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
 
     await _startVoiceRecognition();
     // 麥克風由 SessionRecorder 開一次,同一份 PCM 分流給語音辨識。
-    await _recorder.start(onPcmChunk: (chunk) => _detector?.feed(chunk));
+    //
+    // 只有 パタカラ 那幾個步驟要聽音節,嘴型與舌頭的步驟不餵給解碼器:
+    // 空轉的解碼會跟相機的臉部偵測搶 CPU(辨識器因此已經限制成單執行緒),
+    // 而嘴型步驟正好是臉部偵測最忙的時候。麥克風本身不能關 —— 整段影片
+    // 的音軌要靠它,而且同一支麥克風被兩個消費者搶會有一邊拿到無聲。
+    // 換步驟時 _enterStep() 本來就會 restart() 重開串流並墊靜音暖機,
+    // 所以中間這段沒餵不影響進到 パタカラ 之後的辨識。
+    await _recorder.start(onPcmChunk: (chunk) {
+      if (_phase == SessionPhase.running && _session.step.syllable != null) {
+        _detector?.feed(chunk);
+      }
+    });
     if (!mounted) return;
 
     if (_cameraError != null) {
