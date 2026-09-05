@@ -73,6 +73,7 @@ class PatakaDetector {
             joiner: '$deDir/joiner.onnx',
           ),
           tokens: '$deDir/tokens.txt',
+          // 16kHz 單聲道單執行緒就跟得上,開多條反而跟相機的臉部偵測搶 CPU。
           numThreads: 1,
           debug: false,
           // 熱詞文字 → token 用的切詞表,見 assets/asr/README.md。
@@ -98,10 +99,13 @@ class PatakaDetector {
       model: model,
       // 熱詞只在 modified_beam_search 生效,greedy_search 會默默忽略。
       decodingMethod: 'modified_beam_search',
+      // beam 寬度。要認的只有四個單音節,4 條路徑就夠;加大只是多花算力。
       maxActivePaths: 4,
       hotwordsFile: hotwordsFile,
       hotwordsScore: hotwordsScore,
+      // 靈敏度刻度換算而來,決定模型多願意吐字(見 voice_sensitivity.dart)。
       blankPenalty: blankPenalty,
+      // 不自動切句,理由見類別說明。
       enableEndpoint: false,
     );
   }

@@ -86,23 +86,23 @@ final class FaceLandmarkerService: NSObject {
         outerLip + innerLip + faceEdges + upperCheekA + upperCheekB + lowerCheekA + lowerCheekB + anchors + ovalA + ovalB
     }
 
-    /// 幾組點的平均深度(z,單位跟 x 一樣是正規化座標,越小越靠近鏡頭)。
-    /// 鼓頰時下臉頰會往鏡頭凸,上臉頰不會。順序:lowerA、lowerB、upperA、upperB。
     /// 影格尺寸在 detect 時記下來,landmarker 的 callback 拿不到原始 buffer。
     private var imageWidth = 0
     private var imageHeight = 0
 
+    /// 三個 confidence 都留在 MediaPipe 預設的 0.5。長輩做健口操時嘴型變化大、
+    /// 又常低頭看畫面:調高會在動作做到一半時整張臉判丟,調低則把手和衣領誤認成臉。
     init?(modelPath: String) {
         super.init()
 
         let options = FaceLandmarkerOptions()
         options.baseOptions.modelAssetPath = modelPath
-        options.runningMode = .liveStream
-        options.numFaces = 1
-        options.outputFaceBlendshapes = true
-        options.minFaceDetectionConfidence = 0.5
-        options.minFacePresenceConfidence = 0.5
-        options.minTrackingConfidence = 0.5
+        options.runningMode = .liveStream         // 非同步送檢;.video 同步模式會卡住 capture queue
+        options.numFaces = 1                      // 單人對鏡頭做,多追一張只是白花算力
+        options.outputFaceBlendshapes = true      // 52 維 blendshape 是嘴型判定的唯一輸入(見 mouth_shape.dart)
+        options.minFaceDetectionConfidence = 0.5  // 首次抓到臉的門檻
+        options.minFacePresenceConfidence = 0.5   // 臉「還在畫面上」的門檻,低於它就重跑偵測
+        options.minTrackingConfidence = 0.5       // 逐格追蹤的門檻,調高會頻繁掉追蹤、重跑偵測(耗電)
         options.faceLandmarkerLiveStreamDelegate = self
 
         do {

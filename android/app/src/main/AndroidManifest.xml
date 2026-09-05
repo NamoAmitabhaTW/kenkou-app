@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="futuremode2026"
+        android:label="健口動一動"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

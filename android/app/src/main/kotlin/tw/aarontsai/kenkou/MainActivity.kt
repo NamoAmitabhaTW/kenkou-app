@@ -1,4 +1,4 @@
-package com.example.futuremode2026
+package tw.aarontsai.kenkou
 
 import io.flutter.embedding.android.FlutterActivity
 
