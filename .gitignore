@@ -1,0 +1,195 @@
+# ==============================================================================
+# Flutter 專案 .gitignore(Android + iOS 雙平台,macOS 開發環境)
+# 原則:凡是「工具可重新產生」或「機器/開發者專屬」或「機密」的檔案都不進版控。
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Flutter / Dart / Pub
+# ------------------------------------------------------------------------------
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/doc/api/
+**/ios/Flutter/.last_build_id
+migrate_working_dir/
+
+# 應用程式(app)的 pubspec.lock 要進版控,確保評審端能重現相同依賴版本。
+# 但 packages/ 底下的 local plugin 屬於 library package,依 Dart 官方慣例不鎖版本。
+packages/*/pubspec.lock
+packages/*/.dart_tool/
+packages/*/.packages
+
+# 測試覆蓋率報告
+coverage/
+*.lcov
+test/failures/            # golden test 失敗時產生的差異圖
+
+# Symbolication / Obfuscation(release 產出的符號檔,含還原資訊,不應公開)
+app.*.symbols
+app.*.map.json
+
+# FVM(Flutter Version Management)本機 SDK 快取;.fvmrc / .fvm/fvm_config.json 要保留
+.fvm/flutter_sdk
+.fvm/versions
+
+# ------------------------------------------------------------------------------
+# Android
+# ------------------------------------------------------------------------------
+**/android/**/gradle-wrapper.jar
+**/android/.gradle/
+.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties          # 內含本機 SDK 絕對路徑
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties            # 簽章設定
+**/android/**/.cxx/
+*.class
+*.dex
+*.apk
+*.aab
+*.ap_
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# 簽章金鑰:絕對不可進版控
+*.jks
+*.keystore
+*.p12
+
+# ------------------------------------------------------------------------------
+# iOS / Xcode / CocoaPods
+# ------------------------------------------------------------------------------
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/*sync/
+**/ios/**/.sconsign.dblite
+**/ios/**/.tags*
+**/ios/**/.vagrant/
+**/ios/**/DerivedData/
+**/ios/**/Icon?
+**/ios/**/.generated/
+**/ios/**/dgph
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/ios/ServiceDefinitions.json
+**/ios/**/profile
+
+# 例外:Xcode 範本預設設定要保留
+!**/ios/**/default.mode1v3
+!**/ios/**/default.mode2v3
+!**/ios/**/default.pbxuser
+!**/ios/**/default.perspectivev3
+
+# CocoaPods:Podfile 與 Podfile.lock 進版控,Pods/ 由 pod install 還原
+**/Pods/
+**/.symlinks/
+Podfile.lock.bak
+
+# Xcode 使用者專屬狀態(視窗配置、breakpoint、scheme)
+xcuserdata/
+**/*.xcuserstate
+**/*.xcuserdatad/
+**/xcshareddata/WorkspaceSettings.xcsettings
+**/*.xcworkspace/xcuserdata/
+**/*.xcodeproj/xcuserdata/
+**/*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Swift Package Manager / Carthage
+.swiftpm/
+**/.build/
+Carthage/Build/
+
+# 佈建與憑證:絕對不可進版控
+*.mobileprovision
+*.provisionprofile
+*.cer
+*.certSigningRequest
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# fastlane(若之後導入 CI 出包)
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots/**/*.png
+**/fastlane/test_output
+
+# ------------------------------------------------------------------------------
+# IDE / 編輯器
+# ------------------------------------------------------------------------------
+# IntelliJ IDEA / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code:launch.json / settings.json 若要共用可改為只忽略下面兩行
+.vscode/*
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# 其他編輯器
+.atom/
+.history/
+*.swp
+*~
+
+# ------------------------------------------------------------------------------
+# macOS / 作業系統雜項
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+ehthumbs.db
+Thumbs.db
+
+# ------------------------------------------------------------------------------
+# 機密資訊 / 環境變數
+# ------------------------------------------------------------------------------
+# --dart-define-from-file 用的設定、API 金鑰等一律不進版控;
+# 請另外提供 .env.example 或 dart_defines.example.json 供評審複製。
+.env
+.env.*
+!.env.example
+secrets.json
+dart_defines.json
+**/google-services.json
+**/GoogleService-Info.plist
+firebase_options.dart
+.firebase/
+
+# ------------------------------------------------------------------------------
+# 暫存檔 / 產出物
+# ------------------------------------------------------------------------------
+*.log
+*.pyc
+*.bak
+*.tmp
+*.orig
+*.rej
+*.class
+.buildlog/
+.svn/
+node_modules/
