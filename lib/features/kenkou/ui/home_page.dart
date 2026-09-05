@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/media/recording_gallery_page.dart';
 import '../../../core/ui/app_theme.dart';
-import 'free_practice_page.dart';
 import 'session_page.dart';
 import '../domain/settings.dart';
 import '../data/settings_store.dart';
@@ -59,11 +58,6 @@ class _KenkouHomePageState extends State<KenkouHomePage> {
         await Navigator.push<void>(
           context,
           MaterialPageRoute(builder: (_) => const RecordingGalleryPage()),
-        );
-      case KenkouMenuAction.freePractice:
-        await Navigator.push<void>(
-          context,
-          MaterialPageRoute(builder: (_) => const FreePracticePage()),
         );
     }
   }

@@ -6,7 +6,7 @@ import '../domain/settings.dart';
 import '../data/settings_store.dart';
 
 /// 設定選單裡除了改數字之外還能去的地方。
-enum KenkouMenuAction { recordings, freePractice }
+enum KenkouMenuAction { recordings }
 
 /// 右上角齒輪打開的設定。改動即時存檔,關掉就生效。
 Future<KenkouMenuAction?> showKenkouSettingsSheet(
@@ -162,16 +162,6 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () =>
                       Navigator.pop(context, KenkouMenuAction.recordings),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.face_retouching_natural_outlined,
-                      size: 28),
-                  title: const Text('自由練習', style: TextStyle(fontSize: 19)),
-                  subtitle: const Text('自己挑嘴型練,不照順序',
-                      style: TextStyle(fontSize: 13)),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () =>
-                      Navigator.pop(context, KenkouMenuAction.freePractice),
                 ),
                 const SizedBox(height: 12),
               ],
