@@ -293,24 +293,15 @@ class _PacmanGamePageState extends State<PacmanGamePage>
                   const Icon(Icons.circle, color: kCoinColor, size: 22),
                   const SizedBox(width: 8),
                   Text(
-                    '${_game.coinsEaten}',
+                    '${_game.score}',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: kCoinColor,
                       fontSize: 46,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const Text(' 顆',
+                  const Text(' 分',
                       style: TextStyle(color: Colors.white70, fontSize: 20)),
-                  const SizedBox(width: 16),
-                  Text(
-                    '${_game.score} 分',
-                    style: const TextStyle(
-                      color: kCoinColor,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
                 ],
               ),
             ),
