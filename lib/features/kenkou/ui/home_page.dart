@@ -64,7 +64,6 @@ class _KenkouHomePageState extends State<KenkouHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final ready = _settings != null;
 
     return Scaffold(
@@ -77,12 +76,10 @@ class _KenkouHomePageState extends State<KenkouHomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.face_retouching_natural, size: 96, color: scheme.primary),
-                  const SizedBox(height: 20),
                   const Text(
                     '健口操',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900),
+                    style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 48),
                   FilledButton.icon(

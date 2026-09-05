@@ -353,17 +353,19 @@ class _PacmanGamePageState extends State<PacmanGamePage>
                   fontSize: 26,
                   fontWeight: FontWeight.w800)),
           const SizedBox(height: 6),
+          // 上排放左右、下排放上下 —— 同一組相反的方向排在一起,
+          // 比照著音節順序排更好記。
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              cell(MoveDirection.up),
               cell(MoveDirection.left),
+              cell(MoveDirection.right),
             ],
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              cell(MoveDirection.right),
+              cell(MoveDirection.up),
               cell(MoveDirection.down),
             ],
           ),

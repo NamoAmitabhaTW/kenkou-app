@@ -78,10 +78,10 @@ class _GamesHomePageState extends State<GamesHomePage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      '語音控制玩遊戲',
+                      '語音控制\n玩遊戲',
                       textAlign: TextAlign.center,
                       style:
-                          TextStyle(fontSize: 34, fontWeight: FontWeight.w900),
+                          TextStyle(fontSize: 52, fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 40),
                     FilledButton(

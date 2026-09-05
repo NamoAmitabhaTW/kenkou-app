@@ -197,7 +197,7 @@ class _QuizHomePageState extends State<QuizHomePage> {
                   const Text(
                     '快問快答',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900),
+                    style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900),
                   ),
                   // 準備好的時候標題底下什麼都不放,長輩看到的就是
                   // 一個大標題加一顆大按鈕。還沒有題目才補一句說明。
@@ -239,14 +239,14 @@ class _QuizHomePageState extends State<QuizHomePage> {
                 ],
               ),
             ),
-            Align(
-              alignment: Alignment.topRight,
+            Positioned(
+              top: 4,
+              right: 8,
               child: IconButton(
                 onPressed: bank == null ? null : _openFamilyMenu,
+                iconSize: 34,
                 tooltip: '家人設定',
-                iconSize: 30,
-                padding: const EdgeInsets.all(16),
-                icon: const Icon(Icons.settings_outlined),
+                icon: const Icon(Icons.settings),
               ),
             ),
           ],
