@@ -116,11 +116,61 @@ void main() {
   group('パタカラ', () {
     test('只有目標音節算數', () {
       final s = session([speech(Syllable.pa, reps: 2)]);
+      var at = DateTime(2026);
+      SessionEvent say(Syllable syllable) {
+        at = at.add(const Duration(seconds: 1));
+        return s.onSyllable(syllable, at: at);
+      }
 
-      expect(s.onSyllable(Syllable.ta), SessionEvent.none);
+      expect(say(Syllable.ta), SessionEvent.none);
       expect(s.reps, 0);
-      expect(s.onSyllable(Syllable.pa), SessionEvent.rep);
-      expect(s.onSyllable(Syllable.pa), SessionEvent.stepDone);
+      expect(say(Syllable.pa), SessionEvent.rep);
+      expect(say(Syllable.pa), SessionEvent.stepDone);
+    });
+
+    test('一次發音被吐成好幾個結果,只算一次', () {
+      final s = session([speech(Syllable.pa, reps: 3)]);
+      final at = DateTime(2026);
+
+      expect(s.onSyllable(Syllable.pa, at: at), SessionEvent.rep);
+      expect(s.reps, 1);
+      // 模型對同一聲吐出的重複結果,時間幾乎一樣。
+      expect(s.onSyllable(Syllable.pa, at: at), SessionEvent.none);
+      expect(
+          s.onSyllable(Syllable.pa,
+              at: at.add(const Duration(milliseconds: 120))),
+          SessionEvent.none);
+      expect(
+          s.onSyllable(Syllable.pa,
+              at: at.add(const Duration(milliseconds: 399))),
+          SessionEvent.none);
+      expect(s.reps, 1, reason: '整串重複只能算一次');
+    });
+
+    test('冷卻過了就是新的一次發音', () {
+      final s = session([speech(Syllable.pa, reps: 3)]);
+      final at = DateTime(2026);
+
+      expect(s.onSyllable(Syllable.pa, at: at), SessionEvent.rep);
+      expect(s.onSyllable(Syllable.pa, at: at.add(KenkouSession.repCooldown)),
+          SessionEvent.rep);
+      expect(s.reps, 2);
+    });
+
+    test('換一個動作之後冷卻重新計算', () {
+      final s = session([
+        speech(Syllable.pa, reps: 1),
+        speech(Syllable.ta, reps: 1),
+      ]);
+      final at = DateTime(2026);
+
+      expect(s.onSyllable(Syllable.pa, at: at), SessionEvent.stepDone);
+      s.advance();
+      // 只差 10 毫秒,但已經是另一個動作了,不該被上一個動作的冷卻擋掉。
+      expect(
+          s.onSyllable(Syllable.ta,
+              at: at.add(const Duration(milliseconds: 10))),
+          SessionEvent.stepDone);
     });
 
     test('嘴型分數餵給語音步驟不會有反應', () {
@@ -180,7 +230,7 @@ void main() {
   group('引導步驟與流程', () {
     test('引導步驟只能靠 completeGuided 完成', () {
       final s = session([guided]);
-      expect(s.onSyllable(Syllable.pa), SessionEvent.none);
+      expect(s.onSyllable(Syllable.pa, at: DateTime(2026)), SessionEvent.none);
       expect(s.onFaceScore(0.9), SessionEvent.none);
       expect(s.completeGuided(), SessionEvent.stepDone);
       expect(s.completedSteps, 1);

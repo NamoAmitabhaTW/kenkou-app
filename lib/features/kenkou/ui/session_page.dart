@@ -314,7 +314,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     debugLog('KENKOU', '目標 ${target.name}:$_lastHeardDebug');
 
     final event =
-        effective == null ? SessionEvent.none : _session.onSyllable(effective);
+        effective == null ? SessionEvent.none : _session.onSyllable(effective, at: hit.onset);
     if (event == SessionEvent.none) {
       _maybeAskAgain(target);
     } else {

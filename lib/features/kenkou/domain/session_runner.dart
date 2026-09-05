@@ -78,6 +78,7 @@ class KenkouSession {
     reps = 0;
     subIndex = 0;
     stepComplete = false;
+    _lastCountedAt = null;
     _tracker = step.usesFaceScore
         ? HoldTracker(
             enterThreshold: enterThreshold,
@@ -109,10 +110,33 @@ class KenkouSession {
     return _countRep();
   }
 
+  /// 同一個音在這麼短的時間內再出現,當成同一次發音,不重複計次。
+  ///
+  /// 兩種情況都會發生:一聲「踏」被模型吐成 "ta Ta" 兩個詞(熱詞加分調高時
+  /// 特別明顯),或是使用者一口氣連念好幾聲。不擋的話一次發音就算好幾次,
+  /// 長輩還沒做滿就顯示做完了 —— 這個動作等於白做。
+  ///
+  /// 400 毫秒是取捨:模型的重複輸出多半落在 100~300 毫秒內,而長輩一次一次
+  /// 清楚地念大約隔 0.7 秒以上。想念得更快的人會被吃掉幾次,但「少算」只是
+  /// 多念幾次,「多算」卻是整個動作沒練到。
+  static const repCooldown = Duration(milliseconds: 400);
+
+  /// 上一次真的算進次數的時間(用發音起點,不是收到結果的時間)。
+  DateTime? _lastCountedAt;
+
   /// 麥克風聽到一個音節。只有目標音節才算數。
-  SessionEvent onSyllable(Syllable syllable) {
+  ///
+  /// [at] 是這個音**開始發出來**的時間 —— 用它而不是「現在」,因為串流辨識
+  /// 本來就慢半拍,用收到結果的時間去量間隔會失真。
+  SessionEvent onSyllable(Syllable syllable, {required DateTime at}) {
     if (!_acceptsInput || step.mode != StepMode.speech) return SessionEvent.none;
     if (syllable != step.syllable) return SessionEvent.none;
+    // 這裡已經確定是目標音,所以只要看時間就夠,不必再比對是不是同一個音。
+    final last = _lastCountedAt;
+    if (last != null && at.difference(last) < repCooldown) {
+      return SessionEvent.none;
+    }
+    _lastCountedAt = at;
     return _countRep();
   }
 
