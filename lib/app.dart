@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'features/kenkou/ui/home_page.dart';
-import 'features/pacman/ui/home_page.dart';
+import 'games_home_page.dart';
 import 'features/quiz/ui/home_page.dart';
 import 'core/ui/app_theme.dart';
 
-/// 三個給長輩用的口腔與認知訓練:健口操、快問快答、吃金幣。
+/// 三個給長輩用的口腔與認知訓練:健口操、快問快答、小遊戲。
 class FutureModeApp extends StatelessWidget {
   const FutureModeApp({super.key});
 
@@ -45,7 +45,7 @@ class _HomeShellState extends State<HomeShell> {
       body: switch (_tab) {
         0 => const KenkouHomePage(),
         1 => const QuizHomePage(),
-        _ => const PacmanHomePage(),
+        _ => const GamesHomePage(),
       },
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
@@ -64,7 +64,7 @@ class _HomeShellState extends State<HomeShell> {
           NavigationDestination(
             icon: Icon(Icons.videogame_asset_outlined),
             selectedIcon: Icon(Icons.videogame_asset),
-            label: '吃金幣',
+            label: '小遊戲',
           ),
         ],
       ),
