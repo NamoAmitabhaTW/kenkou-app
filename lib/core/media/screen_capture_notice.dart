@@ -45,19 +45,14 @@ class _NoticeDialog extends StatelessWidget {
             children: [
               Icon(Icons.videocam_outlined, size: 44, color: scheme.primary),
               const SizedBox(height: 16),
-              const Text(
-                '接下來手機會問\n要不要錄螢幕',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 26, fontWeight: FontWeight.w900, height: 1.4),
-              ),
-              const SizedBox(height: 12),
               Text(
-                '請按左邊的「錄製螢幕」',
+                // 寫死斷行,不然會折成「錄製螢 / 幕」。
+                '請按左邊的\n「錄製螢幕」',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  height: 1.4,
                   color: scheme.primary,
                 ),
               ),
@@ -66,7 +61,7 @@ class _NoticeDialog extends StatelessWidget {
               const SizedBox(height: 20),
               Text(
                 // 寫死斷行位置,不要讓它自己折出「影 / 片。」這種收尾。
-                '答題影片只保存在您的手機裡,\n'
+                '影片只保存在您的手機裡,\n'
                 '您可以觀看回憶！',
                 textAlign: TextAlign.center,
                 style:
@@ -101,11 +96,6 @@ class _AlertSketch extends StatelessWidget {
 
     return Column(
       children: [
-        Text(
-          '等一下會看到這個畫面',
-          style: TextStyle(fontSize: 14, color: scheme.outline),
-        ),
-        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
           decoration: BoxDecoration(
