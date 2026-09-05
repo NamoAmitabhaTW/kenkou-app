@@ -12,14 +12,12 @@ class SessionResultView extends StatefulWidget {
   const SessionResultView({
     super.key,
     required this.completed,
-    required this.skipped,
     required this.total,
     required this.savingVideo,
     required this.videoPath,
   });
 
   final int completed;
-  final int skipped;
   final int total;
 
   /// 影片還在背景合成。
@@ -81,20 +79,12 @@ class _SessionResultViewState extends State<SessionResultView> {
             value: widget.completed,
             suffix: ' / ${widget.total} 個動作',
           ),
-          if (widget.skipped > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text('跳過 ${widget.skipped} 個',
-                  style: const TextStyle(fontSize: 16, color: Colors.white54)),
-            ),
           const SizedBox(height: 28),
           ShareResultButton(
             busy: _renderingCertificate,
             label: '分享健口操成果',
             onPressed: _shareCertificate,
           ),
-          const SizedBox(height: 16),
-          const ShareEncouragement(),
           const SizedBox(height: 20),
           // 影片在背景慢慢合成,不擋分享。
           VideoStatusLine(

@@ -472,7 +472,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
         body: SafeArea(
           child: SessionResultView(
             completed: _session.completedSteps,
-            skipped: _session.skippedSteps,
             total: _steps.length,
             savingVideo: _savingVideo,
             videoPath: _videoPath,

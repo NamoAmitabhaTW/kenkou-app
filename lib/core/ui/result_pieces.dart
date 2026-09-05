@@ -57,16 +57,14 @@ class VideoStatusLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = saving
-        ? '影片處理中,稍後可在「影片記錄」觀看'
-        : videoPath != null
-            ? savedText
-            : '這次沒有錄到影片';
+    // 還在合成時什麼都不說 —— 那句話只會讓人以為要等它跑完才能離開。
+    if (saving) return const SizedBox.shrink();
+    final text = videoPath != null ? savedText : '這次沒有錄到影片';
 
     return Text(
       text,
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 14, color: Colors.white38),
+      style: const TextStyle(fontSize: 20, color: Colors.white54),
     );
   }
 }
@@ -129,8 +127,10 @@ class BackHomeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: () => Navigator.pop(context),
+      style: TextButton.styleFrom(minimumSize: const Size.fromHeight(64)),
       child: Text(label,
-          style: const TextStyle(fontSize: 20, color: Colors.white70)),
+          style: const TextStyle(
+              fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white)),
     );
   }
 }
