@@ -73,8 +73,7 @@ flutter run --release    # 接上實機
 
 ## 作品展示
 
-- 作品展示網址(選填)：_(待補)_
-- 評選影片：_(待補)_
+- 評選影片：https://youtu.be/tFOYS_kwfrg
 
 ## 限制與未來工作
 
