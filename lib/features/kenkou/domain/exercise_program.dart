@@ -116,7 +116,7 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
     ExerciseStep(
       id: 'mouth_ii',
       section: mouth,
-      title: '③ 「衣～」橫向拉開',
+      title: '③ 唸「衣～」橫向拉開',
       instruction: '嘴角往兩邊用力拉開,發出「衣～」',
       mode: StepMode.face,
       shapes: const [MouthShape.i],
