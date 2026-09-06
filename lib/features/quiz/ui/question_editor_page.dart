@@ -88,7 +88,9 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     } else if (!_question.hasImage) {
       return '要放一張題目圖片';
     }
-    if (_optionA.text.trim().isEmpty || _optionB.text.trim().isEmpty) {
+    // 自動題的選項是出題當下才產生的,這裡沒有東西要填。
+    if (!_question.isAuto &&
+        (_optionA.text.trim().isEmpty || _optionB.text.trim().isEmpty)) {
       return '兩個選項都要填';
     }
     return null;
@@ -286,9 +288,13 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
                           style: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 12),
-                      _optionRow(),
-                      const SizedBox(height: 24),
-                      _correctPicker(),
+                      if (_question.isAuto)
+                        _autoOptionNotice()
+                      else ...[
+                        _optionRow(),
+                        const SizedBox(height: 24),
+                        _correctPicker(),
+                      ],
                     ],
                   ),
                 ),
@@ -450,6 +456,45 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
           ),
         ),
       ],
+    );
+  }
+
+  /// 自動題沒有選項可以編輯 —— 與其給兩個打了也沒用的輸入框,
+  /// 不如直接說清楚選項是哪裡來的。
+  Widget _autoOptionNotice() {
+    final scheme = Theme.of(context).colorScheme;
+    final auto = _question.auto!;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outlineVariant, width: 1.5),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.auto_mode, size: 28, color: scheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(auto.label,
+                    style: const TextStyle(
+                        fontSize: 19, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
+                Text(
+                  '這一題的兩個選項與正解,每次出題都會照當天的日期重新產生,不用自己填。',
+                  style: TextStyle(
+                      fontSize: 16, height: 1.4, color: scheme.outline),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

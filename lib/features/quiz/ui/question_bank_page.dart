@@ -202,7 +202,7 @@ class _QuestionCard extends StatelessWidget {
                   children: [
                     Text(
                       question.isComplete
-                          ? '${question.optionA} / ${question.optionB}'
+                          ? question.optionsLabel
                           : '未填完的題目',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -212,7 +212,8 @@ class _QuestionCard extends StatelessWidget {
                         color: question.isComplete ? null : scheme.error,
                       ),
                     ),
-                    if (question.isComplete) ...[
+                    // 自動題的正解要等出題當下才算得出來,這裡沒得顯示。
+                    if (question.isComplete && !question.isAuto) ...[
                       const SizedBox(height: 4),
                       Text('正解:${question.correctText}',
                           style:

@@ -41,8 +41,17 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # パタカラ 語音辨識用的 sherpa-onnx 德文串流 ASR 模型與熱詞,見 assets/asr/README.md。
   assets:
+    # 快問快答的預設題目,第一次讀題庫時由 QuizStore 複製進沙盒。
+    - assets/quiz/seed1_image.jpg
+    - assets/quiz/seed1_audio.m4a
+    - assets/quiz/seed2_image.jpg
+    - assets/quiz/seed2_audio.m4a
+    - assets/quiz/seed3_audio.m4a
+    - assets/quiz/seed4_audio.m4a
+    - assets/quiz/seed5_audio.m4a
+
+    # パタカラ 語音辨識用的 sherpa-onnx 德文串流 ASR 模型與熱詞,見 assets/asr/README.md。
     - assets/asr/de/encoder.onnx
     - assets/asr/de/decoder.onnx
     - assets/asr/de/joiner.onnx

@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
 
 import '../domain/question.dart';
 import '../domain/bank.dart';
+import '../domain/seed_questions.dart';
 
 /// 題庫與媒體檔的持久化,全部放在 app 沙盒的 Documents 底下。
 ///
@@ -13,9 +15,14 @@ import '../domain/bank.dart';
 ///
 /// 媒體檔平放在同一層,靠檔名前面的題目 id 區隔;檔名可以由題目 id
 /// 直接算出來,所以 JSON 裡存的檔名跟實際檔案永遠對得起來。
+///
+/// 預設題目([kSeedQuestions])的圖片與錄音打包在 assets 裡,第一次讀
+/// 題庫時複製進同一個資料夾 —— 進了沙盒之後,它們跟家人自己加的題目
+/// 就沒有分別了,一樣可以換圖、重錄、刪掉。
 class QuizStore {
   static const _folder = 'quiz';
   static const _bankFileName = 'bank.json';
+  static const _seedAssetFolder = 'assets/quiz';
 
   Directory? _cachedDir;
   QuizBank? _cachedBank;
@@ -42,7 +49,42 @@ class QuizStore {
   Future<QuizBank> load() async {
     final cached = _cachedBank;
     if (cached != null) return cached;
-    return _cachedBank = await _read();
+    return _cachedBank = await _installSeeds(await _read());
+  }
+
+  /// 把還沒有的預設題目補進題庫,連同它們的圖片與錄音。
+  ///
+  /// 補過就記在 [QuizBank.seededVersion] 裡,所以只會發生一次 ——
+  /// 家人刪掉的預設題目不會下次開啟又冒出來。
+  ///
+  /// 順序是先複製媒體檔再寫題庫:中途失敗的話題庫沒動,下次啟動整個
+  /// 重來一次,不會留下一題指著不存在的圖片。
+  Future<QuizBank> _installSeeds(QuizBank bank) async {
+    final missing = bank.missingSeeds();
+    if (missing.isEmpty && bank.seededVersion >= kSeedVersion) return bank;
+
+    try {
+      for (final question in missing) {
+        for (final fileName in question.mediaFiles) {
+          await _copyAsset(fileName);
+        }
+      }
+      return await _persist(bank.withSeeds(missing));
+    } catch (_) {
+      // 預設題目補不進去不該讓快問快答開不起來 —— 家人自己加的題目
+      // 還在,照樣可以出題。下次啟動會再試一次。
+      return bank;
+    }
+  }
+
+  /// 把打包在 app 裡的一個媒體檔複製進沙盒,檔名不變。
+  Future<void> _copyAsset(String fileName) async {
+    final data = await rootBundle.load('$_seedAssetFolder/$fileName');
+    final bytes = data.buffer.asUint8List(
+      data.offsetInBytes,
+      data.lengthInBytes,
+    );
+    await File(await resolve(fileName)).writeAsBytes(bytes, flush: true);
   }
 
   Future<QuizBank> _read() async {
@@ -53,6 +95,8 @@ class QuizStore {
       return QuizBank.decode(await file.readAsString());
     } catch (_) {
       // 檔案毀損或格式版本不認得就當作空題庫,不要讓 app 開不起來。
+      // 這份空題庫接著會被補上預設題目並寫回檔案 —— 原本的內容已經
+      // 讀不出來了,留著也沒有人救得回來。
       return QuizBank.empty();
     }
   }

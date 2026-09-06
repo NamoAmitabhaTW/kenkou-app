@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futuremode2026/features/quiz/domain/question.dart';
 import 'package:futuremode2026/features/quiz/domain/bank.dart';
+import 'package:futuremode2026/features/quiz/domain/auto_question.dart';
+import 'package:futuremode2026/features/quiz/domain/seed_questions.dart';
 import 'package:futuremode2026/core/media/recording_store.dart';
 
 void main() {
@@ -178,6 +180,122 @@ void main() {
 
     test('少一個選項不能出題', () {
       expect(base.copyWith(optionB: '  ').isComplete, isFalse);
+    });
+  });
+
+  group('預設題目', () {
+    test('每一題都填完了,裝好就能直接開始', () {
+      final bank = QuizBank(questions: kSeedQuestions);
+
+      expect(kSeedQuestions, hasLength(5));
+      expect(bank.playable, hasLength(kSeedQuestions.length));
+    });
+
+    test('id 不重複,也不會跟家人新增的題目撞在一起', () {
+      final ids = kSeedQuestions.map((q) => q.id).toSet();
+
+      expect(ids, hasLength(kSeedQuestions.length));
+      expect(ids.contains(QuizQuestion.create().id), isFalse);
+    });
+
+    test('媒體檔名照題目 id 的規則命名,換圖重錄才會蓋到同一個檔', () {
+      for (final question in kSeedQuestions) {
+        for (final fileName in question.mediaFiles) {
+          expect(fileName, startsWith('${question.id}_'));
+        }
+      }
+    });
+
+    test('空題庫會補上全部預設題目,補完就記下版本', () {
+      final seeded = QuizBank.empty().withSeeds(QuizBank.empty().missingSeeds());
+
+      expect(seeded.questions.map((q) => q.id),
+          containsAll(kSeedQuestions.map((q) => q.id)));
+      expect(seeded.seededVersion, kSeedVersion);
+      expect(seeded.missingSeeds(), isEmpty);
+    });
+
+    test('補過之後刪掉的預設題目不會自己長回來', () {
+      final seeded = QuizBank.empty().withSeeds(QuizBank.empty().missingSeeds());
+
+      expect(seeded.removing('seed1').missingSeeds(), isEmpty);
+    });
+
+    test('已經有的題目不會被補第二次', () {
+      final bank = QuizBank(questions: [kSeedQuestions.first]);
+
+      final missing = bank.missingSeeds().map((q) => q.id);
+      expect(missing, isNot(contains('seed1')));
+      expect(missing, hasLength(kSeedQuestions.length - 1));
+    });
+
+    test('舊的存檔沒有 seededVersion,讀進來會被當成還沒補過', () {
+      final old = jsonDecode(QuizBank.empty().encode()) as Map<String, Object?>;
+      old.remove('seededVersion');
+
+      expect(QuizBank.fromJson(old).seededVersion, 0);
+      expect(QuizBank.fromJson(old).missingSeeds(), hasLength(5));
+    });
+  });
+
+  group('自動題', () {
+    final weekday = QuizQuestion(
+      id: 'seedX',
+      questionText: '今天星期幾?',
+      auto: QuizAutoQuestion.weekday,
+    );
+
+    test('題庫裡沒有選項也算填完了', () {
+      expect(weekday.hasOptions, isFalse);
+      expect(weekday.isComplete, isTrue);
+    });
+
+    test('正解是出題當天的星期,另一個選項是別天', () {
+      // 2026-09-06 是星期日。
+      final resolved =
+          weekday.resolved(now: DateTime(2026, 9, 6), random: Random(1));
+
+      expect(resolved.correctText, '星期日');
+      expect(resolved.optionA, isNot(resolved.optionB));
+    });
+
+    test('隔天再出同一題,正解跟著換', () {
+      final monday =
+          weekday.resolved(now: DateTime(2026, 9, 7), random: Random(1));
+
+      expect(monday.correctText, '星期一');
+    });
+
+    test('正解不會固定在同一邊', () {
+      final sides = {
+        for (var seed = 0; seed < 20; seed++)
+          weekday
+              .resolved(now: DateTime(2026, 9, 6), random: Random(seed))
+              .correctOption,
+      };
+
+      expect(sides, containsAll([1, 2]));
+    });
+
+    test('抽題就會把選項生好,出題流程拿到的是普通題目', () {
+      final bank = QuizBank(questions: [weekday]);
+
+      final drawn = bank.drawRound(random: Random(1), now: DateTime(2026, 9, 6));
+
+      expect(drawn.single.isAuto, isTrue);
+      expect(drawn.single.hasOptions, isTrue);
+      expect(drawn.single.correctText, '星期日');
+    });
+
+    test('存檔再讀回來還是自動題', () {
+      final restored = QuizQuestion.fromJson(
+          jsonDecode(jsonEncode(weekday.toJson())) as Map<String, Object?>);
+
+      expect(restored.auto, QuizAutoQuestion.weekday);
+    });
+
+    test('一般題目讀回來不會變成自動題', () {
+      expect(QuizQuestion.fromJson(q('q1').toJson()).auto, isNull);
     });
   });
 

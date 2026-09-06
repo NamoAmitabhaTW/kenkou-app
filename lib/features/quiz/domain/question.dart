@@ -1,3 +1,7 @@
+import 'dart:math';
+
+import 'auto_question.dart';
+
 /// 題庫裡的一題。純資料 + 「這題完整了沒」的規則,不碰檔案系統。
 ///
 /// 媒體檔只存**檔名**不存路徑,實際路徑由 [QuizStore] 在讀取時組出來。
@@ -11,6 +15,7 @@ class QuizQuestion {
     this.optionB = '',
     this.correctOption = 1,
     this.askedCount = 0,
+    this.auto,
   });
 
   /// 新的一題。id 同時當作媒體檔名的前綴,所以只用英數字。
@@ -39,6 +44,12 @@ class QuizQuestion {
   /// 這一題總共被抽中出題幾次。抽題時靠它確保每一題都輪得到。
   final int askedCount;
 
+  /// 不是 null 的話,[optionA]、[optionB]、[correctOption] 是空的 ——
+  /// 這一題的選項要等 [resolved] 在出題當下產生。見 [QuizAutoQuestion]。
+  final QuizAutoQuestion? auto;
+
+  bool get isAuto => auto != null;
+
   bool get hasImage => imageFile != null;
   bool get hasAudio => audioFile != null;
   bool get hasText => questionText.trim().isNotEmpty;
@@ -51,10 +62,31 @@ class QuizQuestion {
 
   /// 可以拿來出題的條件:題目本體(圖或文字)加兩個選項。
   ///
+  /// 自動題的選項是出題當下才生出來的,題庫裡沒有也算填完了。
+  ///
   /// 錄音是選配 —— 有錄的話出題時會先播一次唸給長輩聽。
-  bool get isComplete => hasPrompt && hasOptions;
+  bool get isComplete => hasPrompt && (hasOptions || isAuto);
 
   String get correctText => correctOption == 1 ? optionA : optionB;
+
+  /// 題庫清單上這一題的兩個選項。
+  String get optionsLabel => auto?.label ?? '$optionA / $optionB';
+
+  /// 把自動題變成可以直接出的一題:選項與正解都填好。
+  ///
+  /// 普通題目原封不動回傳。抽完題統一走這一步,出題流程就不必知道
+  /// 有「自動題」這種東西。
+  QuizQuestion resolved({required DateTime now, required Random random}) {
+    final auto = this.auto;
+    if (auto == null) return this;
+
+    final generated = auto.generate(now, random);
+    return copyWith(
+      optionA: generated.optionA,
+      optionB: generated.optionB,
+      correctOption: generated.correctOption,
+    );
+  }
 
   /// 這一題引用到的媒體檔名。刪題時要一起清掉。
   List<String> get mediaFiles => [
@@ -82,6 +114,7 @@ class QuizQuestion {
       optionB: optionB ?? this.optionB,
       correctOption: correctOption ?? this.correctOption,
       askedCount: askedCount ?? this.askedCount,
+      auto: auto,
     );
   }
 
@@ -94,6 +127,7 @@ class QuizQuestion {
         'optionB': optionB,
         'correctOption': correctOption,
         'askedCount': askedCount,
+        'auto': auto?.name,
       };
 
   factory QuizQuestion.fromJson(Map<String, Object?> json) => QuizQuestion(
@@ -105,5 +139,6 @@ class QuizQuestion {
         optionB: (json['optionB'] as String?) ?? '',
         correctOption: (json['correctOption'] as num?)?.toInt() ?? 1,
         askedCount: (json['askedCount'] as num?)?.toInt() ?? 0,
+        auto: QuizAutoQuestion.byName(json['auto'] as String?),
       );
 }
