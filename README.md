@@ -1,94 +1,127 @@
-# 「健口動一動」App — 讓長輩持之以恆的口腔訓練工具。
+# 健口動一動 Kenkou App
 
-## 問題與目標
+> 長者日常保健訓練 App：提升口腔機能 × 延緩認知退化
 
-- **解決的問題**：降低失智風險與病症程度
-- **目標使用者**：65 歲以上年長者
-- **預期影響**：
-  1. 提升咀嚼力 → 降低失智風險與病症程度(活化海馬迴)、提升長輩飲食能力
-  2. 提升反應力 → 延緩認知退化速度
+健口動一動是一個開源的長者照護 App，希望把原本零散、容易忘記、難以堅持的日常保健訓練，變成一件**容易開始、有溫度、有陪伴，而且每天都做得到**的事情。
+
+本專案為 **2026 台灣未來際黑客松** 的 prototype，目前正透過 **iThome 鐵人賽「Build on Google AI」** 系列文章持續開發與記錄。
+
+---
+
+## 為什麼做這個 App
+
+台灣已邁入超高齡社會，65 歲以上人口占總人口 20.06%。依全國社區失智症流行病學調查，65 歲以上長者失智症盛行率為 7.99%，推估 2025 年失智人口約 37 萬人，**大約每 12 位長者就有 1 位是失智症患者**，且比例持續攀升。
+
+**認知方面**：阿茲海默症等常見的神經退化型失智症目前無法根治，治療目標是改善症狀、延緩退化、提升生活品質。Cochrane 系統性回顧指出，認知刺激有助於失智者的認知功能，並能改善溝通與社會互動。
+
+**口腔方面**：多項病理解剖研究顯示，肺炎是失智症患者最主要的死因；研究也發現，口腔衛生不良與吞嚥障礙和失智者的肺炎風險顯著相關。日本將咀嚼、吞嚥、說話等口腔機能的衰退稱為「口腔衰弱（Oral Frailty）」，並推廣口腔體操作為早期發現、早期介入的方法。
+
+因此，本 App 聚焦兩個方向：**提升口腔機能**與**延緩認知退化**。
+
+---
 
 ## 核心功能
 
-- **健口操** — 引導完成臉部動作、舌壓訓練、發音練習，透過臉部網格偵測判別動作正確、語音辨識判別發音正確。
-- **快問快答** — 家人出題(圖片或文字,可加錄音唸題),長輩限時作答。內建 5 題預設題目(含圖片與唸題錄音)僅作為示例。抽題依出題次數分層,任兩題的出題次數不會差超過 1，不會有題目長期抽不到。其中「今天星期幾」的選項與正解在出題當下才產生，答案不會過期。
-- **小遊戲** — 唸「怕 / 踏 / 卡 / 拉」進行語音操作角色、俄羅斯方塊移動。
-- **影片記錄** — 健口操與快問快答全程錄影(畫面 + 收音)存於手機裝置端，家人可以重複觀看與分享。
+### 🦷 提升口腔機能：健口操
 
-## 系統架構
+參考日本牙科醫師會「オーラルフレイル対策のための口腔体操」設計，透過臉部網格偵測與語音辨識判定動作是否正確，其餘動作以計時方式引導完成。
 
-```mermaid
-flowchart TD
-    CAM["前鏡頭"]
-    MIC["麥克風"]
-    FM["face_mesh (Swift)<br/>MediaPipe Face Landmarker"]
-    SC["screen_capture (Swift)<br/>ReplayKit + AVAssetWriter"]
-    VOICE["core/voice<br/>sherpa-onnx 音節辨識"]
-    DOMAIN["features/*/domain<br/>嘴型、流程、抽題、遊戲規則"]
-    UI["features/*/ui<br/>畫面與互動"]
-    DATA["features/*/data<br/>持久化"]
-    BOX[("裝置沙盒<br/>題庫 JSON、設定、影片")]
-
-    CAM --> FM
-    MIC --> VOICE
-    FM -- "EventChannel:嘴型與唇部輪廓" --> DOMAIN
-    FM -- "PlatformView:相機預覽" --> UI
-    VOICE --> DOMAIN
-    DOMAIN --> UI
-    UI --> DATA
-    UI -- "MethodChannel:開始 / 停止" --> SC
-    DATA --> BOX
-    SC --> BOX
-```
-
-- **`core/`** — 共用基礎:錄影、語音辨識、主題與共用元件。不認識任何 feature。
-- **`features/<功能>/`** — 每個功能各自切 `domain` / `data` / `ui` 三層。`domain` 是純 Dart 的判定規則(嘴型對不對、怎麼抽題、遊戲盤面),不碰畫面也不碰檔案,能不開模擬器就測;`data` 只管持久化;`ui` 只管畫面。
-- **`packages/`** — 兩個專案內的 plugin,把 iOS 原生能力包成 Dart API:`face_mesh`(相機 + 臉部網格)、`screen_capture`(螢幕錄影)。
-- [`test/architecture_test.dart`](test/architecture_test.dart) 會逐檔檢查 import。
-
-## 使用技術
-
-| 類型 | 技術／服務 | 用途 |
+| 動作 | 說明 | 判定方式 |
 | --- | --- | --- |
-| AI 模型 | **Google MediaPipe Face Landmarker** | 開源地端臉部網格偵測，判別健口操嘴型正確 |
-| AI 模型 | **sherpa-onnx streaming zipformer transducer** | 開源地端即時串流語音辨識，判別健口操發音正確 |
-| 前端 | **Flutter / Dart** | 手機平板應用介面。目前發布於 iOS(iPhone / iPad),Android 待補原生實作,見「限制與未來工作」 |
-| 原生 | **Swift** | `face_mesh`:相機 + MediaPipeTasksVision 橋接;`screen_capture`:ReplayKit 錄影與 AVAssetWriter 音影合成 |
-| 原生橋接 | **MethodChannel / EventChannel / PlatformView** | 三種各有職責:**MethodChannel** 送一次性指令(開始、停止);**EventChannel** 讓原生端持續推偵測結果,不必由 Dart 端輪詢;**PlatformView** 把原生相機預覽直接嵌進 Flutter 畫面,不必每張影格搬回 Dart |
+| 口唇體操 | 嘴唇噘起發「屋～」↔ 嘴角拉開發「衣～」 | 臉部偵測（mouthPucker、mouthSmileLeft、mouthSmileRight） |
+| 嘴唇與臉頰體操 | 鼓起雙頰 ↔ 收縮雙頰，反覆數次 | 臉部偵測（cheekPuff） |
+| 舌壓訓練 | 舌頂左右臉頰內側，手指從外抵抗，各 10 次 | 計時引導 |
+| 發音體操 | 「怕／踏／卡／拉」每音 8 次，做 2 組 | 語音辨識 |
+| 唾液腺按摩 | 耳下腺、顎下腺、舌下腺依序按摩 | 計時引導 |
+| 張口訓練 | 張口 10 秒、閉口休息 10 秒 | 臉部偵測（jawOpen） |
+| 伸舌吞嚥體操 | 舌頭稍微伸出，閉口吞嚥 | 計時引導 |
+| 額頭體操 | 手掌與額頭互推，數 5 下 | 計時引導 |
+| 吞嚥體操 | 喉結上提維持 5 秒後吐氣 | 計時引導 |
+| 繞口令練習 | 四句，每句連說 3 次 | 語音辨識 |
+| 舌頭訓練 | 向下／向上／左右伸舌、繞嘴唇一圈 | 計時引導 |
 
-## 安裝與執行
+**在地化調整**
 
-環境需求:Flutter 3.35(stable)、Xcode 與 CocoaPods、**iOS 13.0 以上的 iPhone / iPad 實機**。
+- 日文繞口令無法直接翻譯，改為重新選用中文繞口令。
+- 發音體操 Pa・Ta・Ka・Ra 以「怕／踏／卡／拉」呈現，讓長者更容易看懂與操作（「拉」與日文 Ra 的發音部位不完全相同）。
+- 考量台灣長者缺牙與活動假牙比例較高，以及安全因素，暫不納入口香糖咀嚼訓練。
 
-```bash
-flutter pub get
-cd ios && pod install && cd ..
-flutter run --release    # 接上實機
-```
+### 🧠 延緩認知退化
 
-- **一定要用實機**:相機、麥克風、ReplayKit 螢幕錄影在模擬器上都不會動。示範請用 `--release`,debug 模式下語音辨識會有明顯延遲。
-- 首次啟動會依序詢問相機、麥克風、相簿權限,以及 ReplayKit 的錄影確認 —— 都允許才錄得到影片。
-- 語音辨識模型(約 70 MB)已打包在 `assets/asr/`,不必另外下載,但第一次 build 會比較久。
-- `flutter test` 可跑完整單元測試,不需要實機。
+| 功能 | 說明 | 狀態 |
+| --- | --- | --- |
+| 快問快答 | 家人出題（圖片或文字，可加錄音唸題），長輩限時作答 | ✅ Prototype |
+| 小精靈吃金幣 | 唸「怕／踏／卡／拉」操控小精靈上下左右移動 | ✅ Prototype |
+| 俄羅斯方塊 | 唸「怕／踏／卡／拉」操控方塊左右移動、向下移動、旋轉 | ✅ Prototype |
+| 一起畫畫 | 家人一起透過語音，共同創作一幅 AI 畫作 | 📝 規劃中 |
+| 一起大冒險 | 上傳家庭回憶照片（可附文字說明），由 Gemini 依認知刺激研究的 14 節主題生成專屬關卡，例如多人合作擺出指定姿勢、大家一起找物拍照 | 📝 規劃中 |
 
-## 作品展示
+### 🎥 影片記錄
 
-- 評選影片：https://youtu.be/tFOYS_kwfrg
+健口操與快問快答全程錄影（畫面＋收音），儲存在手機裝置端，家人可重複觀看與分享。
 
-## 限制與未來工作
+---
 
-- **語音辨識用的是德文模型**。パタカラ 要認 pa / ta / ka / ra 四個單音節,而國語沒有 ラ 的 [ɾa],中文模型只吐 `<unk>`;俄、法、英、多語模型實測在單音節上也都不如德文,最後選了德文 streaming zipformer,再用熱詞(modified beam search)補強。ta 偶爾仍會被聽成 ka。完整取捨與實測記錄在 [`assets/asr/README.md`](assets/asr/README.md)。
-- **完全離線,資料只在這一台裝置上**。兩顆 AI 模型都跑在地端,程式裡沒有任何網路呼叫 —— 沒網路也能用,長輩的臉、聲音與影片不會離開手機。代價是模型得跟著 app 打包,而且沒有帳號與雲端備份,換手機資料不會跟著走。
-- **目前只支援 iOS**。Flutter 介面本身跨平台,但臉部偵測與螢幕錄影是 iOS 原生實作(`packages/` 兩個 plugin 底下只有 `ios/`);Android 版需要另外接 MediaPipe Android 與 MediaProjection。
-- **未來:接後端支援學術研究**。若相關單位要驗證成效,可加上去識別化的數據匯出(訓練次數、正確率、完成率)與後端彙整。
+## AI 技術應用
+
+| 狀態 | 技術 | 用途 |
+| --- | --- | --- |
+| ✅ 使用中 | Google MediaPipe Face Landmarker（地端） | 臉部網格偵測，判別健口操嘴型動作是否正確 |
+| ✅ 使用中 | sherpa-onnx streaming zipformer transducer（地端） | 即時串流語音辨識，用於健口操發音判定與小遊戲語音指令 |
+| 📝 規劃中 | Google Cloud Speech-to-Text | 改善單音節「怕／踏／卡／拉」的辨識穩定度；嘗試 Speaker Diarization，支援家人一起參與問答 |
+| 📝 規劃中 | Gemini API | 一起畫畫、一起大冒險的互動內容生成 |
+| 📝 規劃中 | Google MediaPipe Pose Landmarker | 一起大冒險的多人肢體姿勢判定 |
+| 📝 規劃中 | Google Stitch | 設計更符合長輩操作需求與美觀的介面 |
+
+---
+
+## 開發紀錄：iThome 鐵人賽
+
+| Day | 主題 |
+| --- | --- |
+| Day 1 | [長者照護 —— 口腔機能訓練與延緩認知退化](https://ithelp.ithome.com.tw/articles/10411253) |
+| Day 2 | [什麼是失智症？](https://ithelp.ithome.com.tw/articles/10411829) |
+| Day 3 | [失智症能治好嗎？](https://ithelp.ithome.com.tw/articles/10412806) |
+| Day 4 | [口腔機能對長者重要嗎？](https://ithelp.ithome.com.tw/articles/10413139) |
+| Day 5 | [為什麼日本推廣口腔體操？](https://ithelp.ithome.com.tw/articles/10413546) |
+| Day 6 | [健口動一動 App：功能清單](https://ithelp.ithome.com.tw/articles/10414498) |
+| Day 7 | [臉部偵測和臉部網格偵測不同嗎？ Face Detection vs. Face Mesh Detection](https://ithelp.ithome.com.tw/articles/10415091) |
+| Day 8 | [少年，我看你面相不錯。你聽過 Google MediaPipe Face Landmarker 嗎？(上)](https://ithelp.ithome.com.tw/articles/10415600) |
+
+---
+
+## 主要參考資料
+
+- 日本牙科醫師會〈オーラルフレイル対策のための口腔体操〉
+- 日本厚生勞動省〈介護予防マニュアル 第4版〉
+- 衛生福利部（2025）。《長期照顧十年計畫3.0（115~124年）（核定本）》
+- 衛生福利部《失智症診療手冊》（106年，第三版）
+- World Health Organization. (2026). *Risk reduction of cognitive decline and dementia: WHO guidelines* (2nd ed.)
+- Woods B, et al. (2023). *Cognitive stimulation to improve cognitive functioning in people with dementia.* Cochrane Database of Systematic Reviews.
+- Funayama M, et al. (2023). *Pneumonia Risk Increased by Dementia-Related Daily Living Difficulties: Poor Oral Hygiene and Dysphagia as Contributing Factors.* The American Journal of Geriatric Psychiatry, 31(11), 877–885.
+- Tanaka T, Hirano H, Ikebe K, et al. (2024). *Consensus statement on "Oral frailty" from the Japan Geriatrics Society, the Japanese Society of Gerodontology, and the Japanese Association on Sarcopenia and Frailty.* Geriatrics & Gerontology International, 24(11), 1111–1119.
+
+完整參考資料請見各篇鐵人賽文章。
+
+---
+
+## 免責聲明
+
+本 App 為日常保健訓練的輔助工具，**非醫療器材，不提供診斷或治療建議**。
+
+口腔體操請依個人身體狀況進行：開口訓練以不產生疼痛為原則；頸部疼痛或高血壓者不建議進行額頭體操。如已有明顯吞嚥或口腔功能問題，請先尋求牙科或相關醫療專業評估。
+
+健口操內容為參考日本牙科醫師會公開教材的繁體中文整理，非官方版本。
+
+---
 
 ## 第三方服務、資料與素材
 
 | 項目 | 來源 | 授權 |
 | --- | --- | --- |
-| MediaPipe Tasks Vision(iOS Pod) | [google-ai-edge/mediapipe](https://github.com/google-ai-edge/mediapipe) | Apache-2.0 |
+| MediaPipe Tasks Vision（iOS Pod） | [google-ai-edge/mediapipe](https://github.com/google-ai-edge/mediapipe) | Apache-2.0 |
 | `face_landmarker.task` 模型 | [MediaPipe Face Landmarker model card](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker) | Apache-2.0 |
-| sherpa-onnx(Dart/iOS 執行期) | [k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | Apache-2.0 |
+| sherpa-onnx（Dart／iOS 執行期） | [k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | Apache-2.0 |
 | `sherpa-onnx-streaming-zipformer-de-kroko-2025-08-06` | [sherpa-onnx asr-models releases](https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models) | Apache-2.0 |
 | `record` 6.2.1 | pub.dev | BSD-3-Clause |
 | `audioplayers` 6.7.1 | pub.dev | MIT |
@@ -96,15 +129,11 @@ flutter run --release    # 接上實機
 | `path_provider` 2.1.5 / `share_plus` 12.0.2 / `video_player` 2.10.1 | pub.dev | BSD-3-Clause |
 | `sherpa_onnx` 1.13.7 | pub.dev | Apache-2.0 |
 | Flutter SDK 與 `cupertino_icons` / `flutter_lints` / `path` | pub.dev | BSD-3-Clause |
-| 預設題目的圖片(`assets/quiz/*.jpg`) | AI 生成,專案自有 | 可自由使用 |
-| 預設題目的唸題錄音(`assets/quiz/*.m4a`) | 團隊自錄 | 可自由使用 |
+| 預設題目的圖片（`assets/quiz/*.jpg`） | AI 生成，專案自有 | 可自由使用 |
+| 預設題目的唸題錄音（`assets/quiz/*.m4a`） | 團隊自錄 | 可自由使用 |
 
-## 團隊成員
-
-| 姓名 | 分工 |
-| --- | --- |
-| Aaron 蔡佳峪 | 主要開發者(產品設計、Flutter、模型選型與調校) |
+---
 
 ## License
 
-本專案採用 **MIT License**,詳見根目錄的 [`LICENSE`](LICENSE)。
+本專案採用 **MIT License**，詳見根目錄的 [`LICENSE`](LICENSE)。
