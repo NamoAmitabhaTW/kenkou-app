@@ -7,11 +7,6 @@ import 'features/pacman/ui/game_page.dart';
 import 'features/pacman/ui/settings_sheet.dart';
 import 'features/tetris/ui/tetris_page.dart';
 
-/// 小遊戲首頁:選要玩哪一個,設定收在右上角的齒輪。
-///
-/// 放在組合層(跟 app.dart 同一層)而不是任何一個 feature 底下 —— 它同時要開
-/// 吃金幣和俄羅斯方塊,擺進其中一邊就會讓那個 feature 認識另一個,架構測試
-/// 「feature 之間不互相 import」會紅燈。串接多個 feature 本來就是這一層的事。
 class GamesHomePage extends StatefulWidget {
   const GamesHomePage({super.key});
 
@@ -46,8 +41,6 @@ class _GamesHomePageState extends State<GamesHomePage> {
   Future<void> _startTetris() async {
     final settings = _settings;
     if (settings == null) return;
-    // 語音靈敏度跟吃金幣共用一份設定 —— 同一顆模型、同一個刻度,
-    // 兩個遊戲的手感才會一致。
     await Navigator.push<void>(
       context,
       MaterialPageRoute(

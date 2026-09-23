@@ -5,7 +5,6 @@ import 'games_home_page.dart';
 import 'features/quiz/ui/home_page.dart';
 import 'core/ui/app_theme.dart';
 
-/// 三個給長輩用的口腔與認知訓練:健口操、快問快答、小遊戲。
 class FutureModeApp extends StatelessWidget {
   const FutureModeApp({super.key});
 
@@ -26,7 +25,6 @@ class FutureModeApp extends StatelessWidget {
   }
 }
 
-/// 底部三個分頁。每個分頁就是一個功能的首頁。
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -40,8 +38,6 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 刻意不用 IndexedStack:每個分頁的子頁面離開時都要真的被 dispose,
-      // 相機和麥克風才會關掉。留在背景開著既耗電,也會互相搶麥克風。
       body: switch (_tab) {
         0 => const KenkouHomePage(),
         1 => const QuizHomePage(),

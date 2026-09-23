@@ -1,12 +1,6 @@
 import AVFoundation
 import ReplayKit
 
-/// 用 ReplayKit 擷取畫面,再用 AVAssetWriter 寫成 mp4。
-///
-/// 選 ReplayKit 而不是在 Flutter 端截圖,是因為相機預覽是原生的
-/// AVCaptureVideoPreviewLayer,由系統合成、不在 Flutter 的 render tree 裡 ——
-/// `RenderRepaintBoundary.toImage` 那條路截出來相機的位置會是一塊空白。
-/// ReplayKit 錄的是合成後的整個畫面,相機才會進去。
 final class ScreenRecorder {
 
     private var writer: AVAssetWriter?
@@ -15,20 +9,14 @@ final class ScreenRecorder {
     private var outputURL: URL?
     private var sessionStarted = false
 
-    /// 收麥克風還是 App 音訊。
     private var useMicrophone = true
 
-    /// 影片尺寸要看第一張影格、音訊格式要看第一顆音訊 buffer,
-    /// 兩個都拿到才建得出 writer(input 必須在 startWriting 之前加完)。
     private var pendingVideoSize: CGSize?
     private var videoFramesSeen = 0
 
-    /// ReplayKit 的 callback 在自己的 queue 上,寫入狀態要保護。
     private let lock = NSLock()
 
     private(set) var isRecording = false
-
-    // MARK: - 開始 / 結束
 
     func start(outputPath: String, microphone: Bool, completion: @escaping (String?) -> Void) {
         guard RPScreenRecorder.shared().isAvailable else {
@@ -77,12 +65,6 @@ final class ScreenRecorder {
         )
     }
 
-    /// 錄影期間音訊要同時能放(題目語音)又能收(長輩的聲音)。
-    ///
-    /// 關鍵是 `.defaultToSpeaker`:切到 playAndRecord 之後,播放預設會走聽筒,
-    /// 題目會小聲到麥克風收不到,整段影片就只剩環境音。
-    /// mode 用 `.default` 而不是 `.voiceChat` —— 後者會開回音消除,
-    /// 那會把喇叭放出來的題目從麥克風裡消掉,正好跟我們要的相反。
     private func configureAudioSession() {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(
@@ -142,13 +124,9 @@ final class ScreenRecorder {
         }
     }
 
-    // MARK: - 寫入
-
     private func append(_ sampleBuffer: CMSampleBuffer, type: RPSampleBufferType) {
         guard CMSampleBufferDataIsReady(sampleBuffer) else { return }
 
-        // 只收其中一種音訊來源。兩種都寫進同一個 input 會是兩條不同時間軸的
-        // 樣本交錯在一起,寫出來的音軌是壞的。
         let wantedAudio: RPSampleBufferType = useMicrophone ? .audioMic : .audioApp
 
         lock.lock()
@@ -161,7 +139,6 @@ final class ScreenRecorder {
             }
             appendToInput(videoInput, sampleBuffer)
         } else if type == wantedAudio {
-            // 音訊格式決定 writer 的設定,所以第一顆音訊到齊才真正建立 writer。
             if writer == nil {
                 setupWriter(audioSample: sampleBuffer)
             }
@@ -169,10 +146,6 @@ final class ScreenRecorder {
         }
     }
 
-    /// 記下影片尺寸,等音訊來了再一起建 writer。
-    ///
-    /// 但麥克風可能被拒絕、或根本沒有音訊進來,不能無限等下去 ——
-    /// 累積約一秒的影格還沒等到音訊,就先開無聲的 writer。
     private func stageVideo(_ sampleBuffer: CMSampleBuffer) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         pendingVideoSize = CGSize(
@@ -220,8 +193,6 @@ final class ScreenRecorder {
         video.expectsMediaDataInRealTime = true
         if writer.canAdd(video) { writer.add(video) }
 
-        // 音訊設定照著實際來源走。麥克風常常是單聲道、取樣率也不見得是 44.1k,
-        // 寫死成 2ch/44100 會讓 append 直接失敗、整段變成無聲。
         if let audioSample = audioSample,
            let format = CMSampleBufferGetFormatDescription(audioSample),
            let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(format) {

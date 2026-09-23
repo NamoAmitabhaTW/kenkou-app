@@ -3,7 +3,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/ui/result_pieces.dart';
 
-/// 一輪答完的結算畫面。
 class QuizResultView extends StatelessWidget {
   const QuizResultView({
     super.key,
@@ -16,10 +15,8 @@ class QuizResultView extends StatelessWidget {
   final int correctCount;
   final int total;
 
-  /// 影片還在背景合成。分享要等它做完,不然分享出去的會是沒有影片的純文字。
   final bool savingVideo;
 
-  /// 合成好的影片;錄製失敗時是 null。
   final String? videoPath;
 
   Future<void> _share() async {

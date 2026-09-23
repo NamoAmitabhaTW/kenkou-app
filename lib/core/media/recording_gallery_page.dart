@@ -6,7 +6,6 @@ import 'package:video_player/video_player.dart';
 
 import 'recording_store.dart';
 
-/// 過往答題影片列表。
 class RecordingGalleryPage extends StatefulWidget {
   const RecordingGalleryPage({super.key});
 

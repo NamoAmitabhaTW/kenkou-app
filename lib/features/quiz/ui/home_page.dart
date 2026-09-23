@@ -10,7 +10,6 @@ import 'question_bank_page.dart';
 import 'question_editor_page.dart';
 import '../data/quiz_store.dart';
 
-/// 齒輪選單裡的入口。這些都是家人在用的,不是長輩。
 enum _FamilyAction { setup, bank, recordings }
 
 class QuizHomePage extends StatefulWidget {
@@ -36,7 +35,6 @@ class _QuizHomePageState extends State<QuizHomePage> {
     if (mounted) setState(() => _bank = bank);
   }
 
-  /// 新增一題。題目彼此獨立,所以一次就是一題。
   Future<void> _addQuestion() async {
     await Navigator.push<QuizQuestion>(
       context,
@@ -66,7 +64,6 @@ class _QuizHomePageState extends State<QuizHomePage> {
     );
   }
 
-  /// 每次開始都重新抽題,所以按一次「開始」就是一輪新的組合。
   Future<void> _start() async {
     final bank = await _store.load();
     final round = bank.drawRound();
@@ -83,7 +80,6 @@ class _QuizHomePageState extends State<QuizHomePage> {
       ),
     );
 
-    // 出過的題目要記下來,下一輪抽題才輪得到別題。
     await _store.markAsked([for (final q in round) q.id]);
     await _reload();
   }
@@ -98,7 +94,6 @@ class _QuizHomePageState extends State<QuizHomePage> {
     await _reload();
   }
 
-  /// 設定類的操作全部收在齒輪後面,首頁只留長輩要按的那一顆。
   Future<void> _openFamilyMenu() async {
     final bank = _bank;
     if (bank == null) return;
@@ -106,7 +101,6 @@ class _QuizHomePageState extends State<QuizHomePage> {
     final action = await showModalBottomSheet<_FamilyAction>(
       context: context,
       showDragHandle: true,
-      // 數字輸入框會叫出鍵盤,沒有這個的話輸入框會被鍵盤蓋住。
       isScrollControlled: true,
       builder: (context) => Padding(
         padding: EdgeInsets.only(
@@ -199,8 +193,6 @@ class _QuizHomePageState extends State<QuizHomePage> {
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900),
                   ),
-                  // 準備好的時候標題底下什麼都不放,長輩看到的就是
-                  // 一個大標題加一顆大按鈕。還沒有題目才補一句說明。
                   if (bank != null && !ready) ...[
                     const SizedBox(height: 12),
                     Text(
@@ -226,7 +218,6 @@ class _QuizHomePageState extends State<QuizHomePage> {
                       ),
                     )
                   else
-                    // 題庫空的時候,唯一該做的事就是加題目。
                     FilledButton.tonal(
                       onPressed: _addQuestion,
                       style: kBigButtonStyle,
@@ -256,7 +247,6 @@ class _QuizHomePageState extends State<QuizHomePage> {
   }
 }
 
-/// 齒輪選單的一列。長輩偶爾也會誤點進來,所以一樣做大。
 class _MenuTile extends StatelessWidget {
   const _MenuTile({
     required this.icon,

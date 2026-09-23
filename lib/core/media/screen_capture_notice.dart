@@ -2,16 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../ui/app_theme.dart';
 
-/// 螢幕錄影開始前的說明。
-///
-/// 系統的同意框長什麼樣、按鈕怎麼排、哪一顆是預設,全部由 iOS 決定,
-/// app 連一個字都改不了 —— 而 Apple 刻意把「不允許」做成醒目的那顆。
-/// 唯一能做的是在它出現之前,先用我們自己的畫面講清楚要按哪一邊。
 class ScreenCaptureNotice {
-  /// 每次開 app 只說明一次。
-  ///
-  /// 系統的同意框也是每次啟動才問一次,每輪答題都跳一次說明,
-  /// 對天天在用的人只是干擾。
   static bool _shownThisLaunch = false;
 
   static Future<void> showIfNeeded(BuildContext context) async {
@@ -20,7 +11,6 @@ class ScreenCaptureNotice {
 
     await showDialog<void>(
       context: context,
-      // 這頁的重點是「等一下要按左邊那顆」,滑掉就白講了。
       barrierDismissible: false,
       builder: (context) => const _NoticeDialog(),
     );
@@ -46,7 +36,6 @@ class _NoticeDialog extends StatelessWidget {
               Icon(Icons.videocam_outlined, size: 44, color: scheme.primary),
               const SizedBox(height: 16),
               Text(
-                // 寫死斷行,不然會折成「錄製螢 / 幕」。
                 '請按左邊的\n「錄製螢幕」',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -60,7 +49,6 @@ class _NoticeDialog extends StatelessWidget {
               const _AlertSketch(),
               const SizedBox(height: 20),
               Text(
-                // 寫死斷行位置,不要讓它自己折出「影 / 片。」這種收尾。
                 '影片只保存在您的手機裡,\n'
                 '您可以觀看回憶！',
                 textAlign: TextAlign.center,
@@ -83,10 +71,6 @@ class _NoticeDialog extends StatelessWidget {
   }
 }
 
-/// 系統同意框的示意圖。
-///
-/// 刻意畫成灰階的簡圖而不是擬真複製品 —— 目的是指出「左邊那顆」的位置,
-/// 不是讓人以為系統框已經出現而搶著按。
 class _AlertSketch extends StatelessWidget {
   const _AlertSketch();
 

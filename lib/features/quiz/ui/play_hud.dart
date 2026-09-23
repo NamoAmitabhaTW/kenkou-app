@@ -8,10 +8,6 @@ import '../../../core/ui/overlays.dart';
 import '../domain/question.dart';
 import 'play_page.dart' show QuizPhase;
 
-/// 作答中的畫面:題目、鏡子、兩顆選項。
-///
-/// 這裡沒有任何狀態 —— 所有東西都由 [QuizPlayPage] 傳進來。答題規則在那邊,
-/// 這邊只負責畫,兩者才不會攪在一起。
 class QuizQuestionView extends StatelessWidget {
   const QuizQuestionView({
     super.key,
@@ -31,7 +27,6 @@ class QuizQuestionView extends StatelessWidget {
   final int index;
   final QuizPhase phase;
 
-  /// 題目圖片所在的資料夾。還沒解析出來時是 null。
   final String? directory;
 
   final bool cameraReady;
@@ -39,7 +34,6 @@ class QuizQuestionView extends StatelessWidget {
   final int remainingSeconds;
   final int totalSeconds;
 
-  /// 使用者選了哪一個;null = 還沒選,或逾時沒作答。
   final int? selected;
 
   final ValueChanged<int> onAnswer;
@@ -74,8 +68,6 @@ class QuizQuestionView extends StatelessWidget {
     );
   }
 
-  /// 題目本體。圖片題和文字題共用同一個尺寸的方框,
-  /// 版面不會因為題型不同而跳動。
   Widget _promptBox() {
     final fileName = question.imageFile;
     final hasImage = fileName != null && directory != null;
@@ -108,10 +100,6 @@ class QuizQuestionView extends StatelessWidget {
     );
   }
 
-  /// 圖片與選項之間的即時鏡像畫面。
-  ///
-  /// 臉會落在這塊區域的正中間,所以倒數和回饋一律靠邊放,
-  /// 中間永遠留給使用者自己 —— 這也是錄影裡唯一值得留下來的東西。
   Widget _cameraArea() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -139,8 +127,6 @@ class QuizQuestionView extends StatelessWidget {
     );
   }
 
-  /// 倒數。除了數字也畫一圈進度環 —— 長輩不必真的讀數字,
-  /// 看環剩多少就知道還有多久。
   Widget _countdownBadge() {
     final urgent = remainingSeconds <= 5;
     final color = urgent ? kAlertRed : Colors.white;
@@ -175,7 +161,6 @@ class QuizQuestionView extends StatelessWidget {
     );
   }
 
-  /// 答題回饋。做成貼齊底部的橫幅而不是全螢幕覆蓋層,臉才不會被蓋掉。
   Widget _feedbackBand() {
     final correct = _isCorrect;
 
@@ -223,7 +208,6 @@ class QuizQuestionView extends StatelessWidget {
     final isCorrectOption = number == question.correctOption;
     final showingAnswer = phase == QuizPhase.feedback && !_isCorrect;
 
-    // 答錯時只把正解那顆點亮,其餘壓暗 —— 視線自然被帶到正確選項上。
     final Color background;
     final Color foreground;
     if (showingAnswer && isCorrectOption) {

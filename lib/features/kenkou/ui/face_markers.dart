@@ -7,10 +7,6 @@ import '../../../core/ui/app_theme.dart';
 import '../domain/exercise_program.dart';
 import '../domain/face_geometry.dart';
 
-/// 在臉上標出「舌頭往這裡頂」的箭頭。
-///
-/// 位置由當下的臉部座標算出來,使用者移動時箭頭會跟著走;箭頭本身有一個
-/// 隨 [pulse] 呼吸的位移,靜止的圖示長輩容易看不到。
 class FaceMarkerPainter extends CustomPainter {
   const FaceMarkerPainter({
     required this.frame,
@@ -24,10 +20,8 @@ class FaceMarkerPainter extends CustomPainter {
   final FaceMarker marker;
   final FaceSide? side;
 
-  /// 目前這個標記對應的動作已經做到位(目前只有嘴型步驟會用)。
   final bool matched;
 
-  /// 0~1 的呼吸動畫相位。
   final double pulse;
 
   @override
@@ -53,7 +47,6 @@ class FaceMarkerPainter extends CustomPainter {
         final side = this.side ?? FaceSide.left;
         final corner = FaceGeometry.mouthCornerOf(frame, side);
         if (corner == null) return;
-        // 從嘴角往外指的箭頭:舌頭往那個方向頂。
         final dir = side == FaceSide.left ? -1.0 : 1.0;
         _arrow(
           canvas,
@@ -66,7 +59,6 @@ class FaceMarkerPainter extends CustomPainter {
     }
   }
 
-  /// 指向 [angle](弧度,0 = 右、π = 左)的箭頭,尾端在 [tail]。
   void _arrow(
       Canvas canvas, Offset tail, double angle, double length, String label) {
     final dir = Offset(math.cos(angle), math.sin(angle));
@@ -89,7 +81,6 @@ class FaceMarkerPainter extends CustomPainter {
       ..lineTo(start.dx - normal.dx * shaftHalf, start.dy - normal.dy * shaftHalf)
       ..close();
 
-    // 先描一圈黑邊。純色箭頭壓在膚色上會糊掉。
     canvas.drawPath(
       path,
       Paint()
@@ -100,7 +91,6 @@ class FaceMarkerPainter extends CustomPainter {
     );
     canvas.drawPath(path, Paint()..color = kAccentGreen);
 
-    // 標籤放在箭頭尾巴外側,不擋住箭頭本身。
     _label(canvas, start - dir * (length * 0.15) + Offset(0, length * 0.55),
         label);
   }

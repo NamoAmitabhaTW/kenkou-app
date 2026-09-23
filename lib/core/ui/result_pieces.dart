@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
 
-/// 「答對 **8** 題」這種一個大數字夾在句子中間的成績。
-///
-/// 數字放到 56pt 而句子留在 30pt —— 長輩掃一眼只會看到那個數字,
-/// 這正是我們希望他記住的東西。
 class ScoreHeadline extends StatelessWidget {
   const ScoreHeadline({
     super.key,
@@ -37,10 +33,6 @@ class ScoreHeadline extends StatelessWidget {
   }
 }
 
-/// 影片還在合成 / 已存好 / 沒錄到,三種狀態的那一行小字。
-///
-/// 三種都要講出來。沒錄到卻不說,使用者只會看到一顆按了沒有影片的分享鍵,
-/// 搞不清楚是自己按錯還是壞掉。
 class VideoStatusLine extends StatelessWidget {
   const VideoStatusLine({
     super.key,
@@ -52,12 +44,10 @@ class VideoStatusLine extends StatelessWidget {
   final bool saving;
   final String? videoPath;
 
-  /// 存好之後要說的話,例如「答題影片已存到「影片記錄」」。
   final String savedText;
 
   @override
   Widget build(BuildContext context) {
-    // 還在合成時什麼都不說 —— 那句話只會讓人以為要等它跑完才能離開。
     if (saving) return const SizedBox.shrink();
     final text = videoPath != null ? savedText : '這次沒有錄到影片';
 
@@ -69,7 +59,6 @@ class VideoStatusLine extends StatelessWidget {
   }
 }
 
-/// 結算畫面的分享鍵。合成中會轉圈圈並且按不下去。
 class ShareResultButton extends StatelessWidget {
   const ShareResultButton({
     super.key,
@@ -78,7 +67,6 @@ class ShareResultButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  /// 影片還在合成、或獎狀還在畫。按下去也沒東西可分享,所以擋著。
   final bool busy;
   final String label;
   final VoidCallback onPressed;
@@ -103,7 +91,6 @@ class ShareResultButton extends StatelessWidget {
   }
 }
 
-/// 「今天的我也健康,分享這分健康的喜悅!」—— 兩個結算畫面共用的收尾。
 class ShareEncouragement extends StatelessWidget {
   const ShareEncouragement({super.key});
 
@@ -117,7 +104,6 @@ class ShareEncouragement extends StatelessWidget {
   }
 }
 
-/// 結算畫面底部的「回首頁」。
 class BackHomeButton extends StatelessWidget {
   const BackHomeButton({super.key, this.label = '回首頁'});
 

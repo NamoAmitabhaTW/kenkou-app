@@ -2,9 +2,6 @@ import 'dart:math';
 
 import 'auto_question.dart';
 
-/// 題庫裡的一題。純資料 + 「這題完整了沒」的規則,不碰檔案系統。
-///
-/// 媒體檔只存**檔名**不存路徑,實際路徑由 [QuizStore] 在讀取時組出來。
 class QuizQuestion {
   const QuizQuestion({
     required this.id,
@@ -18,34 +15,23 @@ class QuizQuestion {
     this.auto,
   });
 
-  /// 新的一題。id 同時當作媒體檔名的前綴,所以只用英數字。
   factory QuizQuestion.create() =>
       QuizQuestion(id: 'q${DateTime.now().microsecondsSinceEpoch}');
 
   final String id;
 
-  /// 只存**檔名**,不存完整路徑。
-  ///
-  /// iOS 的 app container UUID 每次重裝或更新都會變,
-  /// 存絕對路徑的話下次開啟就全部指向不存在的檔案 —
-  /// 這是 iOS 上最常見的持久化 bug。實際路徑一律在讀取時才組出來。
   final String? imageFile;
   final String? audioFile;
 
-  /// 文字題的題目內容。跟圖片二選一 —— 兩者同時只會有一個有值。
   final String questionText;
 
   final String optionA;
   final String optionB;
 
-  /// 正解,1 或 2。
   final int correctOption;
 
-  /// 這一題總共被抽中出題幾次。抽題時靠它確保每一題都輪得到。
   final int askedCount;
 
-  /// 不是 null 的話,[optionA]、[optionB]、[correctOption] 是空的 ——
-  /// 這一題的選項要等 [resolved] 在出題當下產生。見 [QuizAutoQuestion]。
   final QuizAutoQuestion? auto;
 
   bool get isAuto => auto != null;
@@ -54,28 +40,17 @@ class QuizQuestion {
   bool get hasAudio => audioFile != null;
   bool get hasText => questionText.trim().isNotEmpty;
 
-  /// 題目本體:一張圖片或一段文字,二選一。
   bool get hasPrompt => hasImage || hasText;
 
   bool get hasOptions =>
       optionA.trim().isNotEmpty && optionB.trim().isNotEmpty;
 
-  /// 可以拿來出題的條件:題目本體(圖或文字)加兩個選項。
-  ///
-  /// 自動題的選項是出題當下才生出來的,題庫裡沒有也算填完了。
-  ///
-  /// 錄音是選配 —— 有錄的話出題時會先播一次唸給長輩聽。
   bool get isComplete => hasPrompt && (hasOptions || isAuto);
 
   String get correctText => correctOption == 1 ? optionA : optionB;
 
-  /// 題庫清單上這一題的兩個選項。
   String get optionsLabel => auto?.label ?? '$optionA / $optionB';
 
-  /// 把自動題變成可以直接出的一題:選項與正解都填好。
-  ///
-  /// 普通題目原封不動回傳。抽完題統一走這一步,出題流程就不必知道
-  /// 有「自動題」這種東西。
   QuizQuestion resolved({required DateTime now, required Random random}) {
     final auto = this.auto;
     if (auto == null) return this;
@@ -88,7 +63,6 @@ class QuizQuestion {
     );
   }
 
-  /// 這一題引用到的媒體檔名。刪題時要一起清掉。
   List<String> get mediaFiles => [
         if (imageFile != null) imageFile!,
         if (audioFile != null) audioFile!,

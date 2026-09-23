@@ -9,9 +9,6 @@ import '../domain/bank.dart';
 import 'question_editor_page.dart';
 import '../data/quiz_store.dart';
 
-/// 題庫:所有題目的清單。點一題可以修改(含試聽與重錄),也可以刪除。
-///
-/// 這頁是給家人用的。長輩在首頁只會看到「開始」。
 class QuestionBankPage extends StatefulWidget {
   const QuestionBankPage({super.key, required this.store});
 
@@ -131,7 +128,6 @@ class _QuestionBankPageState extends State<QuestionBankPage> {
   }
 }
 
-/// 清單裡的一題。整張卡片可以點進去修改,右邊的垃圾桶直接刪。
 class _QuestionCard extends StatelessWidget {
   const _QuestionCard({
     required this.question,
@@ -175,7 +171,6 @@ class _QuestionCard extends StatelessWidget {
                 child: fileName != null && directory != null
                     ? Image.file(File('$directory/$fileName'),
                         fit: BoxFit.cover)
-                    // 文字題沒有圖,用題目的頭幾個字當縮圖。
                     : question.hasText
                         ? Padding(
                             padding: const EdgeInsets.all(4),
@@ -212,7 +207,6 @@ class _QuestionCard extends StatelessWidget {
                         color: question.isComplete ? null : scheme.error,
                       ),
                     ),
-                    // 自動題的正解要等出題當下才算得出來,這裡沒得顯示。
                     if (question.isComplete && !question.isAuto) ...[
                       const SizedBox(height: 4),
                       Text('正解:${question.correctText}',
@@ -222,8 +216,6 @@ class _QuestionCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // 鉛筆跟整張卡片是同一個動作 —— 卡片可以點不夠明顯,
-              // 旁邊只有垃圾桶的話會讓人以為這裡只能刪。
               IconButton(
                 onPressed: onTap,
                 tooltip: '編輯',
@@ -245,7 +237,6 @@ class _QuestionCard extends StatelessWidget {
   }
 }
 
-/// 一題都沒有的時候。
 class _EmptyBank extends StatelessWidget {
   const _EmptyBank();
 

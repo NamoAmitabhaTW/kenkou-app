@@ -9,9 +9,6 @@ import '../../../core/ui/app_theme.dart';
 import '../domain/question.dart';
 import '../data/quiz_store.dart';
 
-/// 編輯一題。新增和修改都走這一頁。
-///
-/// 題目彼此獨立,所以這裡不做多題流程 —— 一次就是一題,存完就回去。
 class QuestionEditorPage extends StatefulWidget {
   const QuestionEditorPage({
     super.key,
@@ -37,7 +34,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
   final _recorder = AudioRecorder();
   final _player = AudioPlayer();
 
-  /// 題目本體是圖片還是文字。二選一,切換時會清掉另一邊。
   bool _textMode = false;
 
   int _correct = 1;
@@ -52,7 +48,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     _optionA.text = _question.optionA;
     _optionB.text = _question.optionB;
     _correct = _question.correctOption;
-    // 已經有文字的題目就直接開在文字模式,沒有的話預設用圖片。
     _textMode = _question.hasText && !_question.hasImage;
 
     widget.store.directory().then((dir) {
@@ -73,7 +68,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     super.dispose();
   }
 
-  /// 把畫面上的內容收回資料模型。儲存前都要先做。
   QuizQuestion _capture() => _question.copyWith(
         questionText: _textMode ? _questionText.text : '',
         optionA: _optionA.text,
@@ -81,14 +75,12 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
         correctOption: _correct,
       );
 
-  /// 還差什麼才能存。回傳 null 代表可以存了。
   String? get _missing {
     if (_textMode) {
       if (_questionText.text.trim().isEmpty) return '要打一段題目文字';
     } else if (!_question.hasImage) {
       return '要放一張題目圖片';
     }
-    // 自動題的選項是出題當下才產生的,這裡沒有東西要填。
     if (!_question.isAuto &&
         (_optionA.text.trim().isEmpty || _optionB.text.trim().isEmpty)) {
       return '兩個選項都要填';
@@ -96,7 +88,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     return null;
   }
 
-  /// 切換圖片題/文字題。二選一,所以要把另一邊清掉。
   Future<void> _setTextMode(bool textMode) async {
     if (textMode == _textMode) return;
 
@@ -123,34 +114,24 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     if (keep) {
       await widget.store.save(captured);
     } else if (widget.isNew) {
-      // 新增到一半放棄。圖片和錄音是即時存檔的,題目也可能已經進了題庫,
-      // 所以要整題移除,不然題庫會多一筆沒填完的題目加上孤兒檔案。
       await widget.store.deleteQuestion(captured.id);
     } else {
-      // 修改到一半返回:圖片和錄音是即時存檔的,選項文字則不寫回去。
       await widget.store.save(_question);
     }
 
     if (mounted) Navigator.pop(context, keep ? captured : null);
   }
 
-  // MARK: 圖片
-
   Future<void> _pickImage(ImageSource source) async {
     final XFile? picked;
     try {
       picked = await ImagePicker().pickImage(
         source: source,
-        // 長邊限制在 1600,並指定品質 ——
-        // 這兩個參數會讓 image_picker 重新編碼成 JPEG,順帶解決兩件事:
-        // 相簿裡的 HEIC 會被轉成 Flutter 解得開的格式,而且一張圖穩定
-        // 落在幾百 KB,家人加幾十題也不會把裝置空間吃掉。
         maxWidth: 1600,
         maxHeight: 1600,
         imageQuality: 85,
       );
     } catch (_) {
-      // 沒有相簿/相機權限,或這張圖讀不出來。
       if (mounted) _toast('沒辦法讀取這張圖片,換一張試試');
       return;
     }
@@ -159,8 +140,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     final fileName =
         await widget.store.importImage(File(picked.path), _question.id);
 
-    // 檔名是固定的(q1757_image.jpg),換圖之後路徑沒變,
-    // 不主動清掉快取的話畫面上還是舊的那張。
     await FileImage(File(await widget.store.resolve(fileName))).evict();
 
     if (!mounted) return;
@@ -196,8 +175,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
       ),
     );
   }
-
-  // MARK: 錄音與播放
 
   Future<void> _toggleRecording() async {
     if (_isRecording) {
@@ -248,8 +225,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
       SnackBar(content: Text(message, style: const TextStyle(fontSize: 18))),
     );
   }
-
-  // MARK: 畫面
 
   @override
   Widget build(BuildContext context) {
@@ -307,7 +282,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     );
   }
 
-  /// 圖片題 / 文字題二選一。
   Widget _modePicker() {
     return Center(
       child: SegmentedButton<bool>(
@@ -330,7 +304,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     );
   }
 
-  /// 文字題的題目內容。做得跟圖片方框一樣寬,版面切換時不會跳。
   Widget _textBox() {
     return Container(
       constraints: const BoxConstraints(minHeight: 140),
@@ -358,8 +331,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     );
   }
 
-  /// 正方形的圖片按鈕。出題頁也是用同樣尺寸的方框,
-  /// 所以這裡看到的排版就是長輩之後會看到的排版。
   Widget _imageButton() {
     final fileName = _question.imageFile;
     final directory = _directory;
@@ -444,7 +415,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
         Expanded(
           flex: 2,
           child: FilledButton.tonalIcon(
-            // 沒錄過就不給按,避免使用者按了沒反應以為壞掉。
             onPressed: hasAudio && !_isRecording ? _togglePlayback : null,
             style: kBigButtonStyle,
             icon: Icon(
@@ -459,8 +429,6 @@ class _QuestionEditorPageState extends State<QuestionEditorPage> {
     );
   }
 
-  /// 自動題沒有選項可以編輯 —— 與其給兩個打了也沒用的輸入框,
-  /// 不如直接說清楚選項是哪裡來的。
   Widget _autoOptionNotice() {
     final scheme = Theme.of(context).colorScheme;
     final auto = _question.auto!;

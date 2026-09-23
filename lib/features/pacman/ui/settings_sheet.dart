@@ -4,7 +4,6 @@ import '../../../core/ui/number_setting_row.dart';
 import '../../../core/game_settings.dart';
 import '../data/settings_store.dart';
 
-/// 右上角齒輪打開的設定。跟健口操一樣改動即時存檔,關掉就生效。
 Future<void> showGameSettingsSheet(
   BuildContext context, {
   required GameSettings settings,
@@ -13,7 +12,6 @@ Future<void> showGameSettingsSheet(
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    // 秒數輸入框會叫出鍵盤,沒有這個的話輸入框會被鍵盤蓋住。
     isScrollControlled: true,
     builder: (context) => _SettingsSheet(settings: settings, store: store),
   );
@@ -34,7 +32,6 @@ class _SettingsSheetState extends State<_SettingsSheet> {
 
   void _update(GameSettings next) {
     setState(() => _settings = next);
-    // 每改一格就存 —— 關掉 sheet 的方式太多(往下滑、點外面),等關閉才存會漏。
     widget.store.save(next);
   }
 

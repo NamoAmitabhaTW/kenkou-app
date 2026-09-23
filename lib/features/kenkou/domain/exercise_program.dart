@@ -3,28 +3,20 @@ import 'face_geometry.dart';
 import 'mouth_shape.dart';
 import 'settings.dart';
 
-/// 一個步驟怎麼判定「做到了」。
 enum StepMode {
-  /// 相機看嘴型:做到位並維持住,算一次。
   face,
 
-  /// 麥克風聽音節(加上嘴唇有沒有閉合的輔助判斷),辨識到目標音節,算一次。
   speech,
 
-  /// 相機和麥克風都判不出來(舌頭、按摩、吞嚥),倒數計時引導。
-  /// 畫面上可以配 [FaceMarker] 提示位置或方向。
   guided,
 }
 
-/// 要在臉上標出來的位置。
 enum FaceMarker {
   none,
 
-  /// 某一邊臉頰(搭配 [ExerciseStep.side]):舌頭要往這裡頂。
   cheek,
 }
 
-/// 健口操裡的一個動作。
 class ExerciseStep {
   const ExerciseStep({
     required this.id,
@@ -46,49 +38,31 @@ class ExerciseStep {
 
   final String id;
 
-  /// 所屬的體操名稱,顯示在動作標題上方。
   final String section;
   final String title;
   final String instruction;
   final StepMode mode;
 
-  /// [StepMode.face] 的目標嘴型。長度大於 1 時是一組要輪流做的動作
-  /// (例如鼓起臉頰 → 收縮臉頰),整組做完才算一次。
   final List<MouthShape> shapes;
 
-  /// [StepMode.speech] 的目標音節。
   final Syllable? syllable;
 
-  /// [FaceMarker.cheek] 要頂哪一邊。
   final FaceSide? side;
 
-  /// 畫面上要標出來的位置。
   final FaceMarker marker;
 
-  /// 要做幾次。
   final int reps;
 
-  /// 每次要維持多久;null 表示用設定裡的預設值。
   final Duration? hold;
 
-  /// [StepMode.guided] 每一輪的倒數秒數。
   final int guidedSeconds;
 
-  /// 注意事項,例如「脖子會痛的人請跳過」。
   final String? caution;
 
-  /// 這個步驟是不是靠相機分數(嘴型)計次。
   bool get usesFaceScore => mode == StepMode.face;
 }
 
-/// 依照日本牙醫師會「オーラルフレイル対策のための口腔体操」的順序組出整套。
-///
 /// https://www.jda.or.jp/oral_frail/gymnastics/
-///
-/// 目前只做第一大類「お口・舌の動きをスムーズにする体操」裡相機和麥克風
-/// 判得出來的部分:嘟嘴、張大嘴巴、「衣～」、舌頭頂臉頰(引導)、パタカラ。
-/// 鼓頰、唾液腺按摩、吞嚥體操、舌頭訓練、咀嚼、早口言葉都拿掉了 ——
-/// 判不準的動作留在流程裡只會讓長輩卡住。
 List<ExerciseStep> buildProgram(KenkouSettings s) {
   const mouth = '嘴巴的體操';
   const tongue = '舌頭的體操(舌壓訓練)';
@@ -122,8 +96,6 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       shapes: const [MouthShape.i],
       reps: s.faceReps,
     ),
-    // 舌頭頂臉頰:試過用臉頰輪廓偵測,鏡頭一近就不穩,改成跟舌頭訓練
-    // 一樣用畫面標記 + 倒數。
     const ExerciseStep(
       id: 'tongue_press_left',
       section: tongue,
@@ -146,8 +118,6 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       marker: FaceMarker.cheek,
       guidedSeconds: 20,
     ),
-    // 固定一組。官網是兩組,但一組八個音做完已經不短,而且設定檔裡若殘留
-    // 舊的組數,會多出一整輪。id 保留 _1 的尾碼,跟舊紀錄相容。
     for (final syllable in Syllable.values)
       ExerciseStep(
         id: 'pataka_${syllable.name}_1',

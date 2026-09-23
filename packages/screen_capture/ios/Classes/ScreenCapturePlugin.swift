@@ -23,8 +23,6 @@ public class ScreenCapturePlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "bad_args", message: "缺少輸出路徑", details: nil))
                 return
             }
-            // 預設收麥克風:題目從喇叭出來會被一起收進去,
-            // 長輩的聲音和題目就落在同一條音軌上。
             let microphone = (args["microphone"] as? Bool) ?? true
             recorder.start(outputPath: path, microphone: microphone) { error in
                 if let error = error {

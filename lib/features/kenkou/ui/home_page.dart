@@ -7,7 +7,6 @@ import '../domain/settings.dart';
 import '../data/settings_store.dart';
 import 'settings_sheet.dart';
 
-/// 健口操首頁:一顆「開始」,其他全部收在右上角的齒輪。
 class KenkouHomePage extends StatefulWidget {
   const KenkouHomePage({super.key});
 

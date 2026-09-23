@@ -21,47 +21,22 @@ import 'session_result_view.dart';
 import '../domain/session_runner.dart';
 import '../domain/settings.dart';
 
-/// 整套健口操走到哪裡。
 enum SessionPhase {
-  /// 相機、錄影、語音辨識還在起來。
   preparing,
 
-  /// 正在記錄使用者放鬆時的臉,當作判定的基準。
   calibrating,
 
-  /// 正在做動作。
   running,
 
-  /// 結算。
   done,
 }
 
-/// 校正分兩段:「嘴巴閉起來」3 秒,再「放鬆」2 秒,共 5 秒。
-///
-/// 前段只是請使用者把嘴閉起來、把臉擺正,收到的影格不算數;後段才收「放鬆」
-/// 時的臉當基準。原本是收滿 45 張(約 1.5 秒)就結束,長輩還沒擺好姿勢就抓完了,
-/// 基準會被「還在動的臉」汙染。
 const _calibrationPrepare = Duration(seconds: 3);
 const _calibrationTotal = Duration(seconds: 5);
 
-/// 後段至少要收到這麼多張有臉的影格才算數。時間到了但臉一直偵測不到,
-/// 就繼續等 —— 拿空的基準去判定比多等幾秒糟得多。
 const _calibrationMinFrames = 20;
 
-/// 按下「開始」之後,依序做完整套健口操的畫面。
-///
-/// 這個類別只管**把輸入接到狀態機、把狀態機的事件變成回饋**:
-///
-///   相機影格 → [MouthShapeClassifier] 算分 ─┐
 ///                                          ├→ [KenkouSession] → [SessionEvent]
-///   麥克風 PCM → [PatakaDetector] 聽音節 ──┘
-///
-/// 「做到次數就換下一個」的規則全在 [KenkouSession](純 Dart,可以直接測);
-/// 畫面在 [SessionHud] 與 [SessionResultView];錄影在 [SessionRecorder]。
-///
-/// 整個過程用 ReplayKit 錄下來,跟快問快答走同一條錄影鏈。麥克風的 PCM
-/// 同時分一份給語音辨識 —— 不自己再開一次麥克風,兩個消費者搶同一支
-/// 麥克風的結果通常是其中一邊拿到無聲。
 class KenkouSessionPage extends StatefulWidget {
   const KenkouSessionPage({super.key, required this.settings});
 
@@ -90,7 +65,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
   StreamSubscription<FaceFrame>? _frames;
   StreamSubscription<SyllableHit>? _hits;
 
-  /// 臉上標記的呼吸動畫。
   late final AnimationController _pulse = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 1600));
 
@@ -101,30 +75,23 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
   List<FaceFrame>? _calibrationBuffer;
   DateTime? _calibrationStartedAt;
 
-  /// 最近每張影格「嘴唇有沒有閉著」。パタカラ 用來判斷剛才那個音是不是 パ。
   final _lipsHistory = <(DateTime, bool)>[];
 
-  /// 語音辨識有沒有起來。沒有的話 パタカラ 改成手動計次。
   bool _voiceReady = false;
 
-  /// 除錯面板用:模型聽到什麼、當時嘴唇狀態。
   String _lastHeardDebug = '';
 
-  // 回饋
   String? _thumbText;
   Timer? _thumbTimer;
   String? _hint;
   Timer? _hintTimer;
   Timer? _advanceTimer;
 
-  /// 上一次真的算進次數的時間。用來壓掉「剛算過又叫人重說」的誤提示。
   DateTime? _lastRepAt;
 
-  // 引導步驟的倒數
   int _guidedRemaining = 0;
   Timer? _guidedTimer;
 
-  // 錄影
   bool _savingVideo = true;
   String? _videoPath;
 
@@ -134,7 +101,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     _boot();
   }
 
-  /// 相機、錄影、語音辨識都準備好才開始第一個動作。
   Future<void> _boot() async {
     _frames = FaceMesh.frames.listen(_onFrame);
     try {
@@ -148,14 +114,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     if (!mounted) return;
 
     await _startVoiceRecognition();
-    // 麥克風由 SessionRecorder 開一次,同一份 PCM 分流給語音辨識。
-    //
-    // 只有 パタカラ 那幾個步驟要聽音節,嘴型與舌頭的步驟不餵給解碼器:
-    // 空轉的解碼會跟相機的臉部偵測搶 CPU(辨識器因此已經限制成單執行緒),
-    // 而嘴型步驟正好是臉部偵測最忙的時候。麥克風本身不能關 —— 整段影片
-    // 的音軌要靠它,而且同一支麥克風被兩個消費者搶會有一邊拿到無聲。
-    // 換步驟時 _enterStep() 本來就會 restart() 重開串流並墊靜音暖機,
-    // 所以中間這段沒餵不影響進到 パタカラ 之後的辨識。
     await _recorder.start(onPcmChunk: (chunk) {
       if (_phase == SessionPhase.running && _session.step.syllable != null) {
         _detector?.feed(chunk);
@@ -164,7 +122,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     if (!mounted) return;
 
     if (_cameraError != null) {
-      // 相機開不起來就沒有嘴型可判,整套做不下去。
       setState(() {});
       return;
     }
@@ -176,7 +133,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     });
   }
 
-  /// 載入語音模型。失敗不擋著不讓做 —— パタカラ 改成使用者自己按 +1 計次。
   Future<void> _startVoiceRecognition() async {
     try {
       final detector =
@@ -200,14 +156,11 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     _advanceTimer?.cancel();
     _guidedTimer?.cancel();
     _pulse.dispose();
-    // 中途離開:錄到一半的檔案不留,免得佔空間又沒人看得到。
     _recorder.discard();
     _detector?.dispose();
     FaceMesh.stop();
     super.dispose();
   }
-
-  // MARK: 相機輸入
 
   void _onFrame(FaceFrame frame) {
     if (!mounted) return;
@@ -221,7 +174,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
 
     final step = _session.step;
     if (!step.usesFaceScore) {
-      // 沒有要判定的步驟只在需要畫標記時重繪,其他情況不必每張影格都 setState。
       if (step.marker != FaceMarker.none) {
         setState(() => _frame = frame);
       } else {
@@ -239,12 +191,9 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     _handle(event);
   }
 
-  /// 收集放鬆時的臉。每個人放鬆時的 blendshape 也不會是全 0(嘴型、皺紋、
-  /// 假牙都會影響),不先記下這個底,判定門檻就得為每個人重調。
   void _collectCalibrationFrame(FaceFrame frame) {
     final buffer = _calibrationBuffer!;
     final elapsed = _calibrationElapsed;
-    // 前段收到的臉不算 —— 那時候使用者還在把嘴閉起來。
     if (elapsed >= _calibrationPrepare && frame.hasFace) buffer.add(frame);
     if (elapsed >= _calibrationTotal && buffer.length >= _calibrationMinFrames) {
       _classifier.calibrate(buffer);
@@ -261,14 +210,12 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
       ? Duration.zero
       : DateTime.now().difference(_calibrationStartedAt!);
 
-  /// 兩句一起顯示,不要換來換去 —— 長輩正在看鏡頭調整姿勢,字一變就得重新讀。
   static const _calibrationHeadline = '嘴巴閉起來\n放鬆';
 
   double get _calibrationProgress =>
       (_calibrationElapsed.inMilliseconds / _calibrationTotal.inMilliseconds)
           .clamp(0.0, 1.0);
 
-  /// 這個步驟在這張影格上做到幾分。頭沒擺正時一律 0 —— 側臉的分數只是假資料。
   double _scoreFor(ExerciseStep step, FaceFrame frame) {
     if (!frame.isPoseUsable) return 0;
     return switch (step.mode) {
@@ -279,16 +226,11 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     };
   }
 
-  // MARK: 語音輸入
-
   void _recordLips(FaceFrame frame) {
     _lipsHistory.add((DateTime.now(), _lips.isClosed(frame)));
     if (_lipsHistory.length > 90) _lipsHistory.removeAt(0);
   }
 
-  /// 這個音開始發出來之前,嘴唇有沒有閉起來過。
-  ///
-  /// 語音辨識的時間戳大約準到 0.1 秒,窗口開寬一點:發音前 0.45 秒到發音後 0.08 秒。
   bool _lipsClosedBefore(DateTime onset) {
     final from = onset.subtract(const Duration(milliseconds: 450));
     final to = onset.add(const Duration(milliseconds: 80));
@@ -303,7 +245,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     final step = _session.step;
     final target = step.syllable;
     if (target == null || _session.stepComplete) return;
-    // 模型聽不懂的音只在 ラ 的步驟算數,其他步驟不提示也不扣。
     if (hit.unknown && target != Syllable.ra) return;
 
     final lipsClosed = _lipsClosedBefore(hit.onset);
@@ -323,11 +264,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     _handle(event);
   }
 
-  /// 沒算到的時候提醒再說一次。
-  ///
-  /// 刻意不說「聽到什麼」—— 模型聽錯時把錯的字秀出來只會讓人更困惑。
-  /// 而且剛算過一次就先不提醒:同一個音可能被吐兩次,前一次已經算了,
-  /// 第二次落空不代表使用者做錯。
   void _maybeAskAgain(Syllable target) {
     final justCounted = _lastRepAt != null &&
         DateTime.now().difference(_lastRepAt!) < const Duration(milliseconds: 800);
@@ -335,12 +271,9 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     _showHint('再說一次「${target.label}」');
   }
 
-  // MARK: 流程
-
   void _enterStep() {
     _guidedTimer?.cancel();
     _hint = null;
-    // 上一個動作說到一半的音節不要帶進來。
     _detector?.restart();
 
     final step = _session.step;
@@ -353,7 +286,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     if (mounted) setState(() {});
   }
 
-  /// 引導步驟的倒數。數完就當這個動作做完了。
   void _startCountdown(ExerciseStep step) {
     _guidedTimer?.cancel();
     _guidedRemaining = step.guidedSeconds;
@@ -380,7 +312,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
       case SessionEvent.stepDone:
         _guidedTimer?.cancel();
         _showThumb(_session.step.mode == StepMode.guided ? '完成!' : '做對了!');
-        // 停一下讓人看到「完成」,再換下一個動作。
         _advanceTimer = Timer(const Duration(milliseconds: 1400), _advance);
     }
   }
@@ -425,7 +356,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     _pulse.stop();
     setState(() => _phase = SessionPhase.done);
 
-    // 結算畫面不需要相機和辨識,先關掉省電。
     await _hits?.cancel();
     _hits = null;
     FaceMesh.stop();
@@ -461,8 +391,6 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     );
     if (leave == true && mounted) Navigator.pop(context);
   }
-
-  // MARK: 畫面
 
   @override
   Widget build(BuildContext context) {

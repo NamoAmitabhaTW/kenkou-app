@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futuremode2026/features/tetris/domain/tetris_game.dart';
 
-/// 固定種子,每次跑出來的方塊順序都一樣,測試才不會偶爾紅。
 TetrisGame game({int columns = 10, int rows = 18, double fallSeconds = 1.0}) =>
     TetrisGame(
         columns: columns,
@@ -48,7 +47,6 @@ void main() {
       final startX = g.activeCells.map((c) => c.$1).reduce(math.min);
       g.moveLeft();
       expect(g.activeCells.map((c) => c.$1).reduce(math.min), startX - 1);
-      // 一直往左,最後貼著左牆停住。
       for (var i = 0; i < 20; i++) {
         g.moveLeft();
       }
@@ -86,14 +84,12 @@ void main() {
       final y = g.activeCells.map((c) => c.$2).reduce(math.min);
       g.moveDown();
       expect(g.activeCells.map((c) => c.$2).reduce(math.min), y + 1);
-      // 原本只差 0.1 秒就會自動掉,重新計時之後不該掉。
       g.update(0.2);
       expect(g.activeCells.map((c) => c.$2).reduce(math.min), y + 1);
     });
 
     test('落到底時喊「卡」不會把方塊釘死', () {
       final g = game(rows: 6, fallSeconds: 10);
-      // 一路往下移到不能再移。
       for (var i = 0; i < 20; i++) {
         g.moveDown();
       }
@@ -116,7 +112,6 @@ void main() {
   });
 
   group('出題:七個一袋', () {
-    /// 蒐集前 [count] 塊的形狀。盤面開得又寬又高,才不會還沒發完就堆到頂。
     List<Tetromino> firstPieces(int count, {int seed = 1}) {
       final g = TetrisGame(
           columns: 20, rows: 40, fallSeconds: 0.5, random: math.Random(seed));
@@ -160,11 +155,9 @@ void main() {
 
   group('消行與結束', () {
     test('整列填滿就消掉並得分', () {
-      // 用很窄的盤面:一塊 O 就能填滿兩列的一半,兩塊剛好填滿。
       final g = TetrisGame(
           columns: 4, rows: 8, fallSeconds: 1.0, random: math.Random(1));
       expect(g.score, 0);
-      // 一直放到有得分為止;放不完就是規則壞了。
       var guard = 0;
       while (g.score == 0 && !g.isOver && guard++ < 200) {
         g.update(20);
@@ -173,7 +166,6 @@ void main() {
     });
 
     test('消行時會先演動畫,演完才真的拿掉那一列', () {
-      // 四欄的窄盤面,兩塊 O 就填滿一列。
       final g = TetrisGame(
           columns: 4, rows: 8, fallSeconds: 0.1, random: math.Random(1));
       var guard = 0;
@@ -184,14 +176,12 @@ void main() {
       expect(g.clearingRows, isNotEmpty);
       expect(g.score, greaterThan(0), reason: '分數馬上加,不用等動畫');
 
-      // 動畫期間盤面凍住:那一列還在。
       final row = g.clearingRows.first;
       expect(
           List.generate(g.columns, (c) => g.settledAt(c, row)).every((x) => x != null),
           isTrue,
           reason: '動畫還沒演完,那一列不該先消失');
 
-      // 演完之後才真的拿掉。
       g.update(TetrisGame.clearSeconds + 0.01);
       expect(g.isClearing, isFalse);
       expect(g.clearProgress, 0);

@@ -39,11 +39,9 @@ void main() {
     guidedSeconds: 5,
   );
 
-  /// hold 設成 0:第一張達標影格進入 holding,第二張就算完成。
   KenkouSession session(List<ExerciseStep> steps) =>
       KenkouSession(steps: steps, defaultHold: Duration.zero);
 
-  /// 做到位、維持、放鬆 —— 一次完整的動作。
   SessionEvent doOneRep(KenkouSession s) {
     s.onFaceScore(0.9);
     final event = s.onFaceScore(0.9);
@@ -134,7 +132,6 @@ void main() {
 
       expect(s.onSyllable(Syllable.pa, at: at), SessionEvent.rep);
       expect(s.reps, 1);
-      // 模型對同一聲吐出的重複結果,時間幾乎一樣。
       expect(s.onSyllable(Syllable.pa, at: at), SessionEvent.none);
       expect(
           s.onSyllable(Syllable.pa,
@@ -166,7 +163,6 @@ void main() {
 
       expect(s.onSyllable(Syllable.pa, at: at), SessionEvent.stepDone);
       s.advance();
-      // 只差 10 毫秒,但已經是另一個動作了,不該被上一個動作的冷卻擋掉。
       expect(
           s.onSyllable(Syllable.ta,
               at: at.add(const Duration(milliseconds: 10))),
@@ -184,7 +180,6 @@ void main() {
       expect(resolveSyllable(heard: Syllable.ta, target: Syllable.pa, lipsClosed: true), Syllable.pa);
       expect(resolveSyllable(heard: Syllable.ka, target: Syllable.pa, lipsClosed: true), Syllable.pa);
       expect(resolveSyllable(heard: Syllable.ta, target: Syllable.pa, lipsClosed: false), Syllable.ta);
-      // 反過來不救:目標是タ、聽成パ,就是パ,不能因為嘴唇開著就算タ。
       expect(resolveSyllable(heard: Syllable.pa, target: Syllable.ta, lipsClosed: false), Syllable.pa);
       expect(resolveSyllable(heard: Syllable.pa, target: Syllable.ta, lipsClosed: true), Syllable.pa);
       expect(resolveSyllable(heard: Syllable.ra, target: Syllable.ra, lipsClosed: true), Syllable.ra);
@@ -208,7 +203,6 @@ void main() {
       expect(germanSyllable('Pa,'), 'pa');
       expect(germanSyllable('paar'), 'pa');
       expect(germanSyllable('K'), 'ka');
-      // 模型有時只吐一個字母,大小寫都要算(正規化會先轉小寫)。
       expect(germanSyllable('T'), 'ta');
       expect(germanSyllable('t'), 'ta');
       expect(germanSyllable('ra.'), 'la');
@@ -266,7 +260,6 @@ void main() {
       final pucker = steps.firstWhere((s) => s.id == 'mouth_pucker');
       expect(pucker.reps, 7);
 
-      // パタカラ 固定一組,四個音各一個動作。
       final pataka = steps.where((s) => s.mode == StepMode.speech).toList();
       expect(pataka, hasLength(4));
       expect(pataka.every((s) => s.reps == 3), isTrue);
@@ -306,7 +299,6 @@ void main() {
     });
 
     test('壞掉或缺欄位的 JSON 退回預設並夾在範圍內', () {
-      // 多出來的欄位(舊版設定檔留下的)要被忽略,不能讓整包解析失敗。
       final s = KenkouSettings.fromJson({'faceReps': 999, 'labelSystem': 'nope'});
       expect(s.faceReps, kMaxFaceReps);
       expect(s.patakaReps, const KenkouSettings().patakaReps);
@@ -321,8 +313,6 @@ void main() {
   });
 
   group('閉唇判定', () {
-    // 這幾個數字是判定 パ 的鬆緊,調動它會直接改變「說一次算不算一次」。
-    // 有人動到就該紅燈,不要靠 code review 抓。
     FaceFrame open(double ratio) =>
         FaceFrame(hasFace: true, mouthOpenRatio: ratio);
 
@@ -336,7 +326,6 @@ void main() {
     test('校正之後門檻跟著使用者的放鬆基準走', () {
       final lips = LipsClosedDetector()
         ..calibrate([open(0.020), open(0.030), open(0.025)]);
-      // 平均 0.025,加上固定餘裕 0.006。
       expect(lips.threshold, closeTo(0.031, 1e-9));
       expect(lips.isClosed(open(0.028)), isTrue);
       expect(lips.isClosed(open(0.035)), isFalse);

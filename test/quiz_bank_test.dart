@@ -9,7 +9,6 @@ import 'package:futuremode2026/features/quiz/domain/seed_questions.dart';
 import 'package:futuremode2026/core/media/recording_store.dart';
 
 void main() {
-  /// 可以出題的一題要湊齊:題目本體(圖或文字)加兩個選項。
   QuizQuestion q(String id, {int asked = 0, bool complete = true}) =>
       QuizQuestion(
         id: id,
@@ -45,7 +44,6 @@ void main() {
         questionsPerRound: 5,
       );
 
-      // drawRound 會洗牌,所以比對集合而不是順序。
       expect(bank.drawRound(random: Random(1)).map((e) => e.id).toSet(),
           {'a', 'c'});
     });
@@ -65,7 +63,6 @@ void main() {
       expect(round.map((e) => e.id).toSet(), {'冷門甲', '冷門乙'});
     });
 
-    // 這條是整個演算法的重點:純隨機會讓某幾題長期抽不到。
     test('連續出很多輪之後,任兩題的出題次數差不超過 1', () {
       var bank = bankOf(7, round: 3);
       final rng = Random(42);
@@ -104,8 +101,6 @@ void main() {
           jsonDecode(bankOf(1).encode()) as Map<String, Object?>;
       expect(encoded['version'], kBankSchemaVersion);
 
-      // 未來改格式時,這裡就是加升級分支的地方;在那之前寧可讀不到
-      // 也不要拿舊欄位硬解出一份錯的題庫。
       expect(
         () => QuizBank.fromJson({...encoded, 'version': 99}),
         throwsFormatException,
@@ -251,7 +246,6 @@ void main() {
     });
 
     test('正解是出題當天的星期,另一個選項是別天', () {
-      // 2026-09-06 是星期日。
       final resolved =
           weekday.resolved(now: DateTime(2026, 9, 6), random: Random(1));
 
