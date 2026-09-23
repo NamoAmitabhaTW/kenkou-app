@@ -5,10 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:futuremode2026/features/quiz/data/quiz_store.dart';
 import 'package:futuremode2026/features/quiz/domain/seed_questions.dart';
 
-/// 預設題目真的走一次檔案系統。
-///
-/// 純資料的規則在 quiz_bank_test.dart 裡;這一支測的是「題目有沒有真的
-/// 進到沙盒」—— 之前預設題目沒出現在手機上,壞的就是這一段。
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -16,7 +12,6 @@ void main() {
 
   setUp(() async {
     documents = await Directory.systemTemp.createTemp('quiz_seed_test');
-    // QuizStore 走 path_provider 拿 Documents,測試裡換成暫存資料夾。
     binding.defaultBinaryMessenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       (call) async => documents.path,
@@ -57,9 +52,8 @@ void main() {
   });
 
   test('已經有自己題目的舊裝置,預設題目是補進去而不是蓋掉', () async {
-    // 先做出一份「更新前」的題庫:有一題家人自己出的,沒有 seededVersion。
     final store = QuizStore();
-    await store.deleteQuestion('nobody'); // 先讓沙盒資料夾建起來
+    await store.deleteQuestion('nobody');
     final bankFile = File('${documents.path}/quiz/bank.json');
     await bankFile.writeAsString(
       '{"version":1,"secondsPerQuestion":15,"questionsPerRound":5,'

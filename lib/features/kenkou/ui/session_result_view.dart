@@ -7,7 +7,6 @@ import '../../../core/ui/app_theme.dart';
 import '../../../core/ui/result_pieces.dart';
 import 'certificate.dart';
 
-/// 一整套做完的結算畫面。
 class SessionResultView extends StatefulWidget {
   const SessionResultView({
     super.key,
@@ -20,10 +19,8 @@ class SessionResultView extends StatefulWidget {
   final int completed;
   final int total;
 
-  /// 影片還在背景合成。
   final bool savingVideo;
 
-  /// 合成好的影片;錄製失敗時是 null。
   final String? videoPath;
 
   @override
@@ -33,10 +30,6 @@ class SessionResultView extends StatefulWidget {
 class _SessionResultViewState extends State<SessionResultView> {
   bool _renderingCertificate = false;
 
-  /// 分享獎狀,不分享影片。
-  ///
-  /// 影片合成要等很久,長輩會以為當掉;獎狀是一張當場畫出來的 PNG,
-  /// 按下去馬上就有東西可以傳給家人。影片留在「影片記錄」裡慢慢看。
   Future<void> _shareCertificate() async {
     setState(() => _renderingCertificate = true);
     try {
@@ -86,7 +79,6 @@ class _SessionResultViewState extends State<SessionResultView> {
             onPressed: _shareCertificate,
           ),
           const SizedBox(height: 20),
-          // 影片在背景慢慢合成,不擋分享。
           VideoStatusLine(
             saving: widget.savingVideo,
             videoPath: widget.videoPath,

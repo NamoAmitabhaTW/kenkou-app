@@ -3,15 +3,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
-/// 分層規則的自動檢查。
-///
-/// 這些規則寫在 README 裡很容易腐爛 —— 半夜趕 demo 時隨手加一行 import,
-/// 沒有人會發現架構已經破了。所以把它變成測試:破了就紅燈。
 void main() {
   final libDir = Directory('lib');
 
-  /// 每個 .dart 檔解析出「它 import 了 lib 底下的哪些檔案」,
-  /// 路徑一律正規化成相對 lib 的形式(例如 `core/ui/app_theme.dart`)。
   Map<String, List<String>> importGraph() {
     final graph = <String, List<String>>{};
     final importPattern = RegExp(r"^\s*(?:import|export)\s+'([^']+)'");
@@ -51,7 +45,6 @@ void main() {
 
   setUpAll(() {
     graph = importGraph();
-    // 抓錯目錄的話下面每一條都會空過,所以先確認真的掃到東西了。
     expect(graph.length, greaterThan(30), reason: 'lib/ 底下應該掃得到檔案');
   });
 

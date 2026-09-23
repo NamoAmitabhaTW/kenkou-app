@@ -7,25 +7,11 @@ import '../debug_log.dart';
 import 'mic_stream.dart';
 import 'recording_store.dart';
 
-/// 把一次活動(答題 / 健口操)錄成一支有聲音的影片。
-///
-/// 這條鏈健口操和快問快答完全一樣,以前兩頁各抄了一份 —— 然後就開始漂移:
-/// 一邊記得中途離開要刪檔、另一邊不記得;一邊記得還原 audio session、
-/// 另一邊不記得。收成一個類別之後,修一次兩邊都好。
-///
-/// 為什麼畫面和聲音分開錄:麥克風由 [MicStream] 統一開一次,ReplayKit 那邊
-/// 不開。同一支麥克風被兩個消費者搶,結果通常是其中一邊整段無聲。
-///
-/// 為什麼每一段各自 try:停畫面、停聲音、合成是三件獨立的事。以前包在同一個
-/// try 裡,合成一失敗就連已經錄好的畫面一起丟掉,使用者看到的表徵是
-/// 「明明按了允許卻沒有影片」。現在合成失敗就退回無聲版本 —— 有畫面的
-/// 影片仍然值得留下來。
 class SessionRecorder {
   SessionRecorder({required this.kind, RecordingStore? store, MicStream? mic})
       : _store = store ?? RecordingStore(),
         _mic = mic ?? MicStream();
 
-  /// 錄的是哪個活動,決定檔名前綴與影片記錄裡的成績說法。
   final RecordingKind kind;
 
   final RecordingStore _store;
@@ -33,25 +19,14 @@ class SessionRecorder {
 
   bool _isRecording = false;
 
-  /// 已經收過尾了。[finish] 和 [discard] 都可能被呼叫,而頁面 dispose 時
-  /// 一定會再呼叫一次 [discard] —— 沒有這個旗標的話麥克風會被 dispose 兩次。
   bool _closed = false;
 
-  /// ReplayKit 的無聲影片、麥克風的 wav、以及合成後成品要放的位置。
   String? _rawVideoPath;
   String? _wavPath;
   String? _mergedPath;
 
-  /// 正在錄。頁面靠它決定要不要顯示「錄影中」。
   bool get isRecording => _isRecording;
 
-  /// 開始錄。
-  ///
-  /// **不丟例外** —— 沒錄到影片不該擋住活動本身,長輩是來做健口操的,
-  /// 不是來錄影的。失敗就是 [isRecording] 留在 false。
-  ///
-  /// [onPcmChunk] 每收到一段麥克風 PCM 就被呼叫一次。健口操拿它把同一份
-  /// 聲音分給語音辨識,而不是自己再開一次麥克風。
   Future<void> start({void Function(Uint8List chunk)? onPcmChunk}) async {
     try {
       final output = await _store.newRecordingPath(kind: kind);
@@ -72,10 +47,6 @@ class SessionRecorder {
     debugLog('REC', '麥克風 ${micOk ? '已開始' : '沒開起來(權限?)'}');
   }
 
-  /// 停止錄製、合成、寫進影片記錄。回傳成品路徑;沒錄到就是 null。
-  ///
-  /// [score] / [total] 是要記在影片旁邊的成績:快問快答是答對題數,
-  /// 健口操是做完的動作數。
   Future<String?> finish({required int score, required int total}) async {
     if (_closed) return null;
     _closed = true;
@@ -99,9 +70,6 @@ class SessionRecorder {
     return _writeIndex(path, score: score, total: total);
   }
 
-  /// 中途離開:停掉並把錄到一半的檔案刪掉。
-  ///
-  /// 留著只會佔空間 —— 它從來不會進影片記錄,使用者根本看不到它。
   Future<void> discard() async {
     if (_closed) return;
     _closed = true;
@@ -141,7 +109,6 @@ class SessionRecorder {
     }
   }
 
-  /// 畫面和聲音是分開錄的,合成才會變成一支有聲音的 mp4。
   Future<String> _merge({required String raw, required String? wav}) async {
     final output = _mergedPath;
     if (wav == null || output == null) return raw;
@@ -156,8 +123,6 @@ class SessionRecorder {
     }
   }
 
-  /// 寫不進索引的影片等於不存在(「影片記錄」列表讀的就是索引),
-  /// 所以這一步失敗要回報 null,頁面才不會說「已存到影片記錄」。
   Future<String?> _writeIndex(String path, {required int score, required int total}) async {
     final fileName = path.split('/').last;
     try {

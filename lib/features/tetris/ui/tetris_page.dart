@@ -11,11 +11,6 @@ import '../../../core/voice/syllable.dart';
 import '../domain/tetris_game.dart';
 import 'tetris_painter.dart';
 
-/// 一個音節對到一個操作。
-///
-/// 跟吃金幣共用同一顆模型、同一套對照表,四個音在兩個遊戲裡代表的
-/// 「方向感」也刻意一致:怕往左、踏往右、卡往下。啦在吃金幣是往上,
-/// 這裡沒有「往上」可做,改成旋轉 —— 那是第四個音唯一還有意義的用途。
 enum TetrisMove {
   left(Syllable.pa, '向左', '←'),
   right(Syllable.ta, '向右', '→'),
@@ -37,10 +32,6 @@ final _moveBySyllable = <Syllable, TetrisMove>{
 
 enum _Phase { loading, playing, finished }
 
-/// 俄羅斯方塊本體。
-///
-/// 方塊自己慢慢往下掉,使用者喊 怕 / 踏 / 卡 / 啦 操控。麥克風的 PCM 直接
-/// 餵給 [PatakaDetector],跟吃金幣走同一條路。
 class TetrisPage extends StatefulWidget {
   const TetrisPage({
     super.key,
@@ -48,10 +39,8 @@ class TetrisPage extends StatefulWidget {
     required this.fallSeconds,
   });
 
-  /// 語音靈敏度換算來的值,跟吃金幣共用同一個設定。
   final double blankPenalty;
 
-  /// 方塊多久掉一格,秒。設定頁調的。
   final double fallSeconds;
 
   @override
@@ -64,8 +53,6 @@ class _TetrisPageState extends State<TetrisPage>
 
   TetrisGame _newGame() => TetrisGame(fallSeconds: widget.fallSeconds);
 
-  /// 不要寫成 late final ...()..start() —— late 是第一次被讀到才初始化,
-  /// 這個欄位除了 dispose 沒人讀,ticker 會整局都沒開。
   late final Ticker _ticker;
 
   PatakaDetector? _detector;
@@ -77,7 +64,6 @@ class _TetrisPageState extends State<TetrisPage>
   Duration _lastTick = Duration.zero;
   double _clock = 0;
 
-  /// 最後一次收到的指令,亮起對應的提示 —— 使用者要看得出「有聽到我說話」。
   TetrisMove? _lastMove;
   double _lastMoveAt = -99;
 
@@ -105,7 +91,6 @@ class _TetrisPageState extends State<TetrisPage>
   Future<bool> _startMic() async {
     final mic = MicStream();
     _mic = mic;
-    // 辨識器在這裡分流吃 PCM,不自己再開一次麥克風。
     return mic.start(onChunk: (chunk) => _detector?.feed(chunk));
   }
 
@@ -118,13 +103,10 @@ class _TetrisPageState extends State<TetrisPage>
     super.dispose();
   }
 
-  // MARK: 輸入
-
   void _onSyllable(SyllableHit hit) {
     final move = _moveBySyllable[hit.syllable];
     if (move == null) return;
     _apply(move);
-    // 跟吃金幣一樣,每認到一個音就重開串流,避免整局的上下文越積越長。
     if (_phase == _Phase.playing) _detector?.restart();
   }
 
@@ -144,10 +126,7 @@ class _TetrisPageState extends State<TetrisPage>
     _lastMoveAt = _clock;
   }
 
-  // MARK: 主迴圈
-
   void _onTick(Duration elapsed) {
-    // 卡頓或切回前景時 elapsed 會一次跳很多,夾住免得方塊瞬間掉到底。
     final dt = ((elapsed - _lastTick).inMicroseconds / 1e6).clamp(0.0, 0.05);
     _lastTick = elapsed;
     _clock += dt;
@@ -163,7 +142,6 @@ class _TetrisPageState extends State<TetrisPage>
     if (mounted) setState(() {});
   }
 
-  /// 按「結算」:自己喊停,不用等堆到頂。
   void _finish() {
     setState(() => _phase = _Phase.finished);
     _mic?.dispose();
@@ -177,8 +155,6 @@ class _TetrisPageState extends State<TetrisPage>
     });
     if (_mic == null && _detector != null) _startMic();
   }
-
-  // MARK: 畫面
 
   @override
   Widget build(BuildContext context) {
@@ -209,10 +185,6 @@ class _TetrisPageState extends State<TetrisPage>
     );
   }
 
-  /// 上方的資訊列:分數、四個音的對照、結算鍵。
-  ///
-  /// 原本放在右邊,但盤面是直的、右邊那一條又窄又長,字塞不大。移到上方之後
-  /// 盤面可以吃滿整個寬度,格子跟著變大。
   Widget _infoPanel() {
     final recent = _clock - _lastMoveAt < 0.8;
     return Padding(

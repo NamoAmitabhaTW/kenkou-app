@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
 
-/// 相機畫面上下緣的漸層壓暗。
-///
-/// 只壓上下、中間不動 —— 疊在上面的字要看得清楚,但整片壓暗會讓人臉
-/// 變得灰灰的很難看,而人臉正是錄影裡唯一值得留下來的東西。
 class ScrimGradient extends StatelessWidget {
   const ScrimGradient({
     super.key,
@@ -39,10 +35,6 @@ class ScrimGradient extends StatelessWidget {
   }
 }
 
-/// 「錄影中」的紅點徽章。
-///
-/// 明確告訴使用者正在錄影。這是在錄長輩的臉,不該悄悄進行 ——
-/// 所以健口操和快問快答一定要長得一樣,不能其中一頁忘了放。
 class RecordingBadge extends StatelessWidget {
   const RecordingBadge({super.key});
 
@@ -66,11 +58,9 @@ class RecordingBadge extends StatelessWidget {
   }
 }
 
-/// 相機、麥克風、語音模型都還在起來時的等待畫面。
 class PreparingView extends StatelessWidget {
   const PreparingView({super.key, this.detail});
 
-  /// 多說一句在等什麼,例如「正在載入語音辨識」。
   final String? detail;
 
   @override
@@ -97,10 +87,6 @@ class PreparingView extends StatelessWidget {
   }
 }
 
-/// 做對一次的回饋:大拇指 + 一句話,彈出來再淡掉。
-///
-/// 做得很大是刻意的。長輩在做動作時眼睛是盯著自己的臉的,回饋要大到
-/// 用餘光就看得到,不然等於沒有。
 class ThumbOverlay extends StatelessWidget {
   const ThumbOverlay({super.key, required this.text});
 
@@ -144,7 +130,6 @@ class ThumbOverlay extends StatelessWidget {
   }
 }
 
-/// 開始前記錄使用者放鬆時的臉。
 class CalibrationOverlay extends StatelessWidget {
   const CalibrationOverlay({
     super.key,
@@ -153,10 +138,8 @@ class CalibrationOverlay extends StatelessWidget {
     required this.hasFace,
   });
 
-  /// 現在要使用者做什麼。字很大 —— 這是整段校正唯一要讀的東西。
   final String headline;
 
-  /// 0~1,整段校正走到哪了。
   final double progress;
 
   final bool hasFace;
@@ -204,7 +187,6 @@ class CalibrationOverlay extends StatelessWidget {
   }
 }
 
-/// 相機開不起來。沒有相機就沒有嘴型可判,整套做不下去,只能請人回首頁。
 class CameraErrorOverlay extends StatelessWidget {
   const CameraErrorOverlay({super.key, required this.message});
 

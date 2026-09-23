@@ -24,8 +24,6 @@ void main() {
       }
     });
 
-    // 這個是重點:改地圖最容易犯的錯就是把一塊金幣圍起來,
-    // 玩到最後死活吃不完。
     test('每一顆金幣都從起點走得到', () {
       final game = MazeGame();
       final reachable = <int>{};
@@ -66,7 +64,6 @@ void main() {
   });
 
   group('走位', () {
-    // 一條乾淨的走廊,測轉彎和撞牆的行為。
     const corridor = [
       '#####',
       '#...#',
@@ -89,7 +86,7 @@ void main() {
     test('念一次走設定的格數就停', () {
       final game = corridorGame()..turn(MoveDirection.right);
       game.update(10);
-      expect(game.x, 3); // 從 (1,1) 走兩格
+      expect(game.x, 3);
       expect(game.y, 1);
       expect(game.isMoving, isFalse);
     });
@@ -102,7 +99,6 @@ void main() {
     });
 
     test('格數還沒走完就撞牆的話,撞到就停', () {
-      // 走廊只到 x=3,從 x=1 出發設定走 3 格,第 3 格是牆。
       final game = corridorGame(cellsPerCommand: 3)..turn(MoveDirection.right);
       game.update(10);
       expect(game.x, 3);
@@ -111,16 +107,13 @@ void main() {
 
     test('走過去的路上金幣會被吃掉,而且只算一次', () {
       final game = corridorGame();
-      // 起點那格在建構時就吃掉了,所以總數要把它算回來。
       final total = game.coinsLeft + game.coinsEaten;
       game.turn(MoveDirection.right);
       game.update(10);
-      // 起點 (1,1) 加上右邊兩格。
       expect(game.coinsEaten, 3);
       expect(game.coinsLeft, total - 3);
       expect(game.score, 3 * kCoinScore);
 
-      // 原路走回去不會再加分。
       game.turn(MoveDirection.left);
       game.update(10);
       expect(game.coinsEaten, 3);
@@ -128,8 +121,6 @@ void main() {
 
     test('轉不過去的指令會排隊,到得了的路口才轉', () {
       final game = corridorGame()..turn(MoveDirection.right);
-      // 在 (1,1) 往右走,馬上喊往下 —— (1,2) 是空的但已經走過頭了,
-      // 下一個能往下的路口是 (3,1)。
       game.update(0.5);
       game.turn(MoveDirection.down);
       expect(game.queued, MoveDirection.down);
@@ -167,7 +158,6 @@ void main() {
     test('吃完全部金幣就算破關', () {
       final game = corridorGame();
       expect(game.cleared, isFalse);
-      // 沿著外圈繞一圈,中間那格 (2,2) 是牆,其他八格都有金幣。
       for (final direction in const [
         MoveDirection.right,
         MoveDirection.down,
@@ -195,7 +185,6 @@ void main() {
     for (final entry in kDirectionBySyllable.entries) {
       expect(entry.value.word, isNotEmpty);
     }
-    // 「怕踏卡拉」必須真的在中文對照表裡,不然辨識到了也對不回來。
     expect(MoveDirection.left.word, '怕');
     expect(MoveDirection.right.word, '踏');
     expect(MoveDirection.down.word, '卡');

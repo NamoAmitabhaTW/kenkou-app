@@ -4,16 +4,11 @@ import 'package:flutter/material.dart';
 
 import '../domain/maze.dart';
 
-/// 街機的配色,直接照原版:牆是藍色、金幣是米色、小精靈是黃色。
 const kMazeWall = Color(0xFF2121DE);
 const kMazeBackground = Color(0xFF000000);
 const kCoinColor = Color(0xFFFFC24A);
 const kPacmanColor = Color(0xFFFFE600);
-// 金幣是金色、小精靈是更亮的黃 —— 遊戲叫「吃金幣」,豆子就該像金幣。
-// 兩者同色系但小精靈直徑是金幣的 4.4 倍、會動、還有缺口嘴巴,不會認錯;
-// 反過來把小精靈改成別的顏色,長輩就找不到「那個黃色的」了。
 
-/// 把迷宮畫出來。沒有怪物 —— 這個遊戲只有吃金幣。
 class MazePainter extends CustomPainter {
   const MazePainter({
     required this.game,
@@ -23,10 +18,8 @@ class MazePainter extends CustomPainter {
 
   final MazeGame game;
 
-  /// 嘴巴張多開,0(閉起來)~1(張到最大)。
   final double mouth;
 
-  /// 大金幣的呼吸,0~1。
   final double pulse;
 
   @override
@@ -45,8 +38,6 @@ class MazePainter extends CustomPainter {
     canvas.restore();
   }
 
-  /// 牆畫成「管線」:把相鄰的牆格中心連起來,先描一條粗的藍線,
-  /// 再用背景色描一條細的蓋在正中間,就變成原版那種雙線外框。
   void _paintWalls(Canvas canvas, double cell) {
     final path = Path();
     for (var row = 0; row < game.height; row++) {
@@ -54,8 +45,6 @@ class MazePainter extends CustomPainter {
         if (!game.isWall(col, row)) continue;
         final center = Offset((col + 0.5) * cell, (row + 0.5) * cell);
         var joined = false;
-        // 只看右邊和下面,每條邊才不會畫兩次。界外不算牆 ——
-        // `isWall` 對界外回傳 true(給走位判定用的),照著連會把線畫到畫布外面。
         for (final step in const [Offset(1, 0), Offset(0, 1)]) {
           final nextCol = col + step.dx.toInt();
           final nextRow = row + step.dy.toInt();
@@ -65,7 +54,6 @@ class MazePainter extends CustomPainter {
           joined = true;
         }
         if (joined) continue;
-        // 孤零零一格的牆,連不到任何鄰居,自己畫成一個點。
         if (_wallInside(col - 1, row) || _wallInside(col, row - 1)) continue;
         path.moveTo(center.dx, center.dy);
         path.lineTo(center.dx, center.dy);
@@ -113,7 +101,6 @@ class MazePainter extends CustomPainter {
     final center = Offset((game.x + 0.5) * cell, (game.y + 0.5) * cell);
     final radius = cell * 0.44;
 
-    // 嘴巴的半角。張到最大約 40 度,再大就不像圓的了。
     final half = mouth * 0.22 * math.pi;
 
     canvas.save();

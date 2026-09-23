@@ -1,7 +1,6 @@
 import '../../../core/storage/json_file_store.dart';
 import '../domain/settings.dart';
 
-/// 設定檔:`Documents/kenkou/settings.json`
 class KenkouSettingsStore extends JsonFileStore<KenkouSettings> {
   const KenkouSettingsStore();
 

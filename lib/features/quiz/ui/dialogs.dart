@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../domain/question.dart';
 
-/// 刪除一題前的確認。
 Future<bool> confirmDeleteQuestion(
   BuildContext context,
   QuizQuestion question,

@@ -28,7 +28,6 @@ void main() {
 
     test('校正會扣掉靜止時的基準值', () {
       final classifier = MouthShapeClassifier();
-      // 這個人放鬆時 jawOpen 天生就有 0.2
       classifier.calibrate(List.generate(10, (_) => frameWith({'jawOpen': 0.2})));
       final features = classifier.extractFeatures(frameWith({'jawOpen': 0.2}));
       expect(features['jawOpen'], closeTo(0, 0.001));
@@ -49,9 +48,9 @@ void main() {
       final tracker = HoldTracker();
       tracker.update(0.85);
       expect(tracker.state, HoldState.holding);
-      tracker.update(0.75); // 低於 enter 但高於 exit
+      tracker.update(0.75);
       expect(tracker.state, HoldState.holding);
-      tracker.update(0.60); // 低於 exit 才中斷
+      tracker.update(0.60);
       expect(tracker.state, HoldState.idle);
     });
 
@@ -63,12 +62,11 @@ void main() {
       expect(tracker.completions, 1);
       expect(tracker.state, HoldState.completed);
 
-      // 沒放鬆就繼續維持,不該一直加次數
       await Future<void>.delayed(const Duration(milliseconds: 80));
       tracker.update(0.9);
       expect(tracker.completions, 1);
 
-      tracker.update(0.1); // 放鬆
+      tracker.update(0.1);
       expect(tracker.state, HoldState.idle);
     });
   });

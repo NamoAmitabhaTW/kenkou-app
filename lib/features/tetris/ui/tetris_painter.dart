@@ -5,10 +5,6 @@ import '../domain/tetris_game.dart';
 const kTetrisBackground = Color(0xFF0B0E14);
 const kTetrisGrid = Color(0xFF1B2130);
 
-/// 七種方塊各一個顏色。
-///
-/// 挑的是彼此差很多、在深色底上都夠亮的顏色 —— 長輩要一眼看出「這一塊是什麼形狀」,
-/// 相鄰兩塊顏色像的話,堆起來就看不出接縫在哪。
 const kPieceColors = <Tetromino, Color>{
   Tetromino.i: Color(0xFF4DD0E1),
   Tetromino.o: Color(0xFFFFD54F),
@@ -19,7 +15,6 @@ const kPieceColors = <Tetromino, Color>{
   Tetromino.l: Color(0xFFFFB74D),
 };
 
-/// 把盤面畫出來。已經落地的格子、正在掉的那一塊,畫法一樣。
 class TetrisPainter extends CustomPainter {
   const TetrisPainter({required this.game});
 
@@ -30,7 +25,6 @@ class TetrisPainter extends CustomPainter {
     final cell = _cellSize(size);
     final board = Size(cell * game.columns, cell * game.rows);
     canvas.save();
-    // 盤面置中,左右留白平均。
     canvas.translate((size.width - board.width) / 2,
         (size.height - board.height) / 2);
 
@@ -40,7 +34,6 @@ class TetrisPainter extends CustomPainter {
 
     final clearing = game.clearingRows.toSet();
     for (var row = 0; row < game.rows; row++) {
-      // 正在消掉的那幾列改畫動畫,原本的格子不畫。
       if (clearing.contains(row)) continue;
       for (var col = 0; col < game.columns; col++) {
         final piece = game.settledAt(col, row);
@@ -51,7 +44,6 @@ class TetrisPainter extends CustomPainter {
       _paintClearing(canvas, cell, row, game.clearProgress);
     }
     for (final (col, row) in game.activeCells) {
-      // 剛出生時方塊會有一部分在盤面上方,那幾格不用畫。
       if (row < 0) continue;
       _paintCell(canvas, cell, col, row, game.piece);
     }
@@ -78,10 +70,6 @@ class TetrisPainter extends CustomPainter {
     }
   }
 
-  /// 消行動畫:整列閃成白色,同時往中線收合再淡出。
-  ///
-  /// 用「收合」而不是單純淡出 —— 收合看得出「這一列不見了、上面要掉下來」,
-  /// 淡出只看得出「顏色變淡」。長輩要能看懂發生了什麼事。
   void _paintClearing(Canvas canvas, double cell, int row, double t) {
     final height = cell * (1 - t);
     if (height <= 0) return;
@@ -103,7 +91,6 @@ class TetrisPainter extends CustomPainter {
     final rect = Rect.fromLTWH(col * cell, row * cell, cell, cell).deflate(1.5);
     final rrect = RRect.fromRectAndRadius(rect, Radius.circular(cell * 0.18));
     canvas.drawRRect(rrect, Paint()..color = color);
-    // 內側再畫一圈亮邊,格子跟格子之間才分得出來。
     canvas.drawRRect(
       rrect.deflate(cell * 0.14),
       Paint()..color = Colors.white.withValues(alpha: 0.22),

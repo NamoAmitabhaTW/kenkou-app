@@ -1,17 +1,3 @@
-// パタカラ 語音辨識的離線煙霧測試。
-//
-// 用電腦上的 sherpa-onnx(sherpa_onnx_macos)載入 assets/asr 裡同一顆德文模型,
-// 餵一支 16kHz 單聲道 wav,印出辨識出的文字、token 路徑與對到的音節。
-// 改 syllable_map.dart 或 hotwords.txt 之前先跑這個。
-//
-//   dart run tool/pataka_smoke.dart path/to/16k.wav [hotwordsScore]
-//
-// hotwordsScore 預設跟 app 一樣 3.0,給 0 就等於沒有熱詞。
-//
-// 做測試音檔可以用 macOS 內建的中文語音:
-//   say -v Meijia "啪。啪。啪。" -o pa.aiff && afconvert -f WAVE -d LEI16@16000 -c 1 pa.aiff pa.wav
-// 注意 afconvert 從 m4a 轉出來的 wav 是 WAVE_FORMAT_EXTENSIBLE,sherpa 讀不了,
-// 要再用 python 的 wave 模組重寫成一般 PCM。
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -48,7 +34,6 @@ void main(List<String> args) {
 
   for (final entry in engines.entries) {
     final (model, parse) = entry.value;
-    // 跟 lib/kenkou/pataka_detector.dart 的 _config 一致。
     final recognizer = sherpa.OnlineRecognizer(sherpa.OnlineRecognizerConfig(
       model: model,
       decodingMethod: 'modified_beam_search',
@@ -58,10 +43,9 @@ void main(List<String> args) {
       enableEndpoint: false,
     ));
     final stream = recognizer.createStream();
-    // 跟 app 一樣先墊半秒靜音暖機。
     stream.acceptWaveform(samples: Float32List(8000), sampleRate: 16000);
 
-    const chunk = 1600; // 0.1 秒,模擬手機上麥克風串流的餵法
+    const chunk = 1600;
     final counts = <String, int>{};
     var seen = 0;
     var last = '';

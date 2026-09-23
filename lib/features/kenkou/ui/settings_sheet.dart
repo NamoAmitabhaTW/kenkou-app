@@ -4,10 +4,8 @@ import '../../../core/ui/number_setting_row.dart';
 import '../domain/settings.dart';
 import '../data/settings_store.dart';
 
-/// 設定選單裡除了改數字之外還能去的地方。
 enum KenkouMenuAction { recordings }
 
-/// 右上角齒輪打開的設定。改動即時存檔,關掉就生效。
 Future<KenkouMenuAction?> showKenkouSettingsSheet(
   BuildContext context, {
   required KenkouSettings settings,
@@ -16,7 +14,6 @@ Future<KenkouMenuAction?> showKenkouSettingsSheet(
   return showModalBottomSheet<KenkouMenuAction>(
     context: context,
     showDragHandle: true,
-    // 數字輸入框會叫出鍵盤,沒有這個的話輸入框會被鍵盤蓋住。
     isScrollControlled: true,
     builder: (context) => _SettingsSheet(settings: settings, store: store),
   );
@@ -37,8 +34,6 @@ class _SettingsSheetState extends State<_SettingsSheet> {
 
   void _update(KenkouSettings next) {
     setState(() => _settings = next);
-    // 每改一格就存,使用者關掉 sheet 的方式太多(往下滑、點外面),
-    // 等關閉時才存很容易漏。
     widget.store.save(next);
   }
 

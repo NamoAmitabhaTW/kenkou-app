@@ -25,9 +25,6 @@ void main() {
   });
 
   group('題號動畫', () {
-    // 這是一個真的當掉過的 bug:題號的中文數字以前是一個只有五個元素的
-    // const list,而「每輪出題」可以設到 30 題 —— 家人把題數調到 6,
-    // 第六題的題號動畫就會陣列越界。
     testWidgets('題數超過五題也畫得出題號', (tester) async {
       for (final index in [0, 4, 5, 11, 29]) {
         await tester.pumpWidget(MaterialApp(
