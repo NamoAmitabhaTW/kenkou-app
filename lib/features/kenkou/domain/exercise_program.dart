@@ -62,7 +62,6 @@ class ExerciseStep {
   bool get usesFaceScore => mode == StepMode.face;
 }
 
-/// https://www.jda.or.jp/oral_frail/gymnastics/
 List<ExerciseStep> buildProgram(KenkouSettings s) {
   const mouth = '嘴巴的體操';
   const tongue = '舌頭的體操(舌壓訓練)';

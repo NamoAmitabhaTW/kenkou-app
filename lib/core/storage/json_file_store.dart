@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-///   `Documents/<folder>/<fileName>`
 abstract class JsonFileStore<T> {
   const JsonFileStore();
 

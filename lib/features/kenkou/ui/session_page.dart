@@ -36,7 +36,6 @@ const _calibrationTotal = Duration(seconds: 5);
 
 const _calibrationMinFrames = 20;
 
-///                                          ├→ [KenkouSession] → [SessionEvent]
 class KenkouSessionPage extends StatefulWidget {
   const KenkouSessionPage({super.key, required this.settings});
 

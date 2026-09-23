@@ -57,8 +57,6 @@ class SessionRecording {
       );
 }
 
-///   Documents/recordings/index.json
-///   Documents/recordings/`quiz_<timestamp>.mp4`
 class RecordingStore {
   static const _folder = 'recordings';
   static const _indexFile = 'index.json';

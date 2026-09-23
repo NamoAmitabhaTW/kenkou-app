@@ -1,4 +1,3 @@
-//   dart run tool/pataka_smoke.dart path/to/16k.wav [hotwordsScore]
 import 'dart:io';
 import 'dart:typed_data';
 
