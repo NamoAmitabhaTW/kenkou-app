@@ -1,0 +1,60 @@
+group = "tw.aarontsai.face_mesh"
+version = "1.0-SNAPSHOT"
+
+buildscript {
+    ext.kotlin_version = "2.1.0"
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.9.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
+
+android {
+    namespace = "tw.aarontsai.face_mesh"
+
+    compileSdk = 36
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11
+    }
+
+    sourceSets {
+        main.java.srcDirs += "src/main/kotlin"
+        main.assets.srcDirs += "../ios/Resources"
+    }
+
+    defaultConfig {
+        minSdk = 24
+        consumerProguardFiles("consumer-rules.pro")
+    }
+
+    dependencies {
+        def camerax_version = "1.4.2"
+        implementation("androidx.camera:camera-core:$camerax_version")
+        implementation("androidx.camera:camera-camera2:$camerax_version")
+        implementation("androidx.camera:camera-lifecycle:$camerax_version")
+        implementation("androidx.camera:camera-view:$camerax_version")
+
+        implementation("com.google.mediapipe:tasks-vision:0.10.26.1")
+    }
+}

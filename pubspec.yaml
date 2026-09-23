@@ -13,7 +13,7 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
-  # 專案內的 local plugin:MediaPipe Face Landmarker 的 iOS 橋接
+  # 專案內的 local plugin:MediaPipe Face Landmarker 的 iOS / Android 橋接
   face_mesh:
     path: packages/face_mesh
 

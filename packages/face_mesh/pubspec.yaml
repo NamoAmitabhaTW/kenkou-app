@@ -14,5 +14,8 @@ dependencies:
 flutter:
   plugin:
     platforms:
+      android:
+        package: tw.aarontsai.face_mesh
+        pluginClass: FaceMeshPlugin
       ios:
         pluginClass: FaceMeshPlugin

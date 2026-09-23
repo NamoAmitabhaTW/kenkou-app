@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -148,6 +148,12 @@ class FaceMeshPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return const AndroidView(
+        viewType: 'face_mesh/preview',
+        creationParamsCodec: StandardMessageCodec(),
+      );
+    }
     return const UiKitView(
       viewType: 'face_mesh/preview',
       creationParamsCodec: StandardMessageCodec(),
