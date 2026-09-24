@@ -36,9 +36,9 @@ class SessionRecorder {
 
       await ScreenCapture.start(_rawVideoPath!, microphone: false);
       _isRecording = true;
-      debugLog('REC', 'ReplayKit 已開始 → $_rawVideoPath');
+      debugLog('REC', '螢幕錄影已開始 → $_rawVideoPath');
     } catch (e) {
-      debugLog('REC', 'ReplayKit 啟動失敗:$e');
+      debugLog('REC', '螢幕錄影啟動失敗:$e');
       _mergedPath = null;
       _isRecording = false;
     }
@@ -88,10 +88,10 @@ class SessionRecorder {
   Future<String?> _stopScreenCapture() async {
     try {
       final raw = await ScreenCapture.stop();
-      debugLog('REC', 'ReplayKit 收尾 → $raw');
+      debugLog('REC', '螢幕錄影收尾 → $raw');
       return raw;
     } catch (e) {
-      debugLog('REC', 'ReplayKit 收尾失敗:$e');
+      debugLog('REC', '螢幕錄影收尾失敗:$e');
       return null;
     }
   }

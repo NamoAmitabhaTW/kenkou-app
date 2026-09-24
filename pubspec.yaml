@@ -17,7 +17,7 @@ dependencies:
   face_mesh:
     path: packages/face_mesh
 
-  # 專案內的 local plugin:ReplayKit 螢幕錄製
+  # 專案內的 local plugin:螢幕錄製(iOS ReplayKit / Android MediaProjection)
   screen_capture:
     path: packages/screen_capture
 
