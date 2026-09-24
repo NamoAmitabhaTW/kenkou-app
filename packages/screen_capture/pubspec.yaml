@@ -1,5 +1,5 @@
 name: screen_capture
-description: In-app screen recording backed by ReplayKit (iOS).
+description: In-app screen recording backed by ReplayKit (iOS) and MediaProjection (Android).
 version: 0.0.1
 publish_to: 'none'
 
@@ -14,5 +14,8 @@ dependencies:
 flutter:
   plugin:
     platforms:
+      android:
+        package: tw.aarontsai.screen_capture
+        pluginClass: ScreenCapturePlugin
       ios:
         pluginClass: ScreenCapturePlugin

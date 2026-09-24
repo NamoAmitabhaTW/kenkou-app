@@ -21,10 +21,13 @@ class MicStream {
     _pcm.clear();
 
     final stream = await _recorder.startStream(
-      const RecordConfig(
+      RecordConfig(
         encoder: AudioEncoder.pcm16bits,
         sampleRate: sampleRate,
         numChannels: 1,
+        audioInterruption: Platform.isAndroid
+            ? AudioInterruptionMode.none
+            : AudioInterruptionMode.pause,
       ),
     );
 
