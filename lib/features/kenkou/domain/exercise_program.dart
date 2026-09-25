@@ -93,6 +93,7 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
   const saliva = '唾液腺按摩';
   const mouthOpen = '張口訓練';
   const tongueOut = '伸舌吞嚥體操';
+  const forehead = '額頭體操';
 
   return [
     ExerciseStep(
@@ -184,6 +185,17 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
         GuidedCue('舌頭稍微伸出來', seconds: 6),
         GuidedCue('閉上嘴巴吞口水', seconds: 14),
       ],
+    ),
+    const ExerciseStep(
+      id: 'forehead_push',
+      section: forehead,
+      mode: StepMode.guided,
+      cues: [
+        GuidedCue('手掌和額頭互相推', seconds: 8),
+        GuidedCue('低頭看肚臍,數到 5', seconds: 12),
+      ],
+      detail: '用手掌推額頭,額頭出力抵住手掌',
+      caution: '脖子會痛或有高血壓的人,請跳過',
     ),
   ];
 }
