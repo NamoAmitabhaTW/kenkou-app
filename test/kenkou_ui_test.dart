@@ -173,6 +173,24 @@ void main() {
       expect(sound.left, greaterThan(prompt.right));
       expect(sound.top, lessThan(prompt.bottom));
     });
+
+    testWidgets('引導步驟:名稱小字、動作大字,重複的分段顯示第幾組', (tester) async {
+      final cheeks = buildProgram(const KenkouSettings(faceReps: 5))
+          .firstWhere((s) => s.id == 'cheek_puff_suck');
+      final session = KenkouSession(steps: [cheeks], defaultHold: _hold);
+
+      await pumpHud(tester, session, countdown: 5);
+      expect(find.text('嘴唇與臉頰體操'), findsOneWidget);
+      expect(find.text('鼓起臉頰'), findsOneWidget);
+      expect(find.text('第 1 / 5 組'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget);
+
+      session.completeGuided();
+      session.completeGuided();
+      await pumpHud(tester, session, countdown: 5);
+      expect(find.text('鼓起臉頰'), findsOneWidget);
+      expect(find.text('第 2 / 5 組'), findsOneWidget);
+    });
   });
 
   group('回饋元件', () {

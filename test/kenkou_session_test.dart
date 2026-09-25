@@ -411,6 +411,7 @@ void main() {
       ExerciseStep byId(String id) => steps.firstWhere((s) => s.id == id);
 
       expect(byId('lips_u_i').reps, 7);
+      expect(byId('cheek_puff_suck').reps, 7);
 
       final pataka = steps.where((s) => s.mode == StepMode.speech).toList();
       expect(pataka, hasLength(4));
@@ -418,24 +419,32 @@ void main() {
       expect(pataka.map((s) => s.syllable), Syllable.values);
     });
 
-    test('整套 8 個動作', () {
+    test('整套 9 個動作', () {
       final steps = buildProgram(const KenkouSettings());
       expect(steps.map((s) => s.id), [
-        'lips_u_i', 'mouth_open', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1',
+        'lips_u_i', 'mouth_open', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1',
       ]);
       final press = steps.where((s) => s.marker == FaceMarker.cheek).toList();
       expect(press.map((s) => s.side), [FaceSide.left, FaceSide.right]);
       expect(press.every((s) => s.mode == StepMode.guided), isTrue);
     });
 
-    test('口唇是先屋再衣算一組', () {
-      final lips = buildProgram(const KenkouSettings(faceReps: 5))
-          .firstWhere((s) => s.id == 'lips_u_i');
+    test('口唇是先屋再衣算一組;臉頰改成倒數引導,鼓起、縮起算一組', () {
+      final steps = buildProgram(const KenkouSettings(faceReps: 5));
+      ExerciseStep byId(String id) => steps.firstWhere((s) => s.id == id);
+
+      final lips = byId('lips_u_i');
       expect(lips.mode, StepMode.face);
       expect(lips.shapes, [MouthShape.u, MouthShape.i]);
       expect(lips.hold, isNull);
       expect(lips.pauseOnDrop, isFalse);
       expect(lips.rest, isNull);
+
+      final cheeks = byId('cheek_puff_suck');
+      expect(cheeks.mode, StepMode.guided);
+      expect(cheeks.cues.map((c) => c.text), ['鼓起臉頰', '縮起臉頰']);
+      expect(cheeks.cues.map((c) => c.seconds), [5, 5]);
+      expect(cheeks.guidedCues, hasLength(10));
     });
 
     test('引導步驟都有分段提示,每一段都有字、倒數都大於 0 秒', () {

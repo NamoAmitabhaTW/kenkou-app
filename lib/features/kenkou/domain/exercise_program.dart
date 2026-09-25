@@ -80,6 +80,7 @@ class ExerciseStep {
 
 List<ExerciseStep> buildProgram(KenkouSettings s) {
   const lips = '口唇體操';
+  const cheeks = '嘴唇與臉頰體操';
   const tonguePress = '舌壓訓練';
   const pataka = '發音體操';
 
@@ -96,6 +97,16 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       section: lips,
       mode: StepMode.face,
       shapes: const [MouthShape.a],
+      reps: s.faceReps,
+    ),
+    ExerciseStep(
+      id: 'cheek_puff_suck',
+      section: cheeks,
+      mode: StepMode.guided,
+      cues: const [
+        GuidedCue('鼓起臉頰', seconds: 5),
+        GuidedCue('縮起臉頰', seconds: 5),
+      ],
       reps: s.faceReps,
     ),
     const ExerciseStep(
