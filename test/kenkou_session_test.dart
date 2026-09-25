@@ -423,10 +423,10 @@ void main() {
           [...Syllable.values, ...Syllable.values]);
     });
 
-    test('整套 18 個動作', () {
+    test('整套 20 個動作', () {
       final steps = buildProgram(const KenkouSettings());
       expect(steps.map((s) => s.id), [
-        'lips_u_i', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2', 'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual', 'mouth_open', 'tongue_out_swallow', 'forehead_push',
+        'lips_u_i', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2', 'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual', 'mouth_open', 'tongue_out_swallow', 'forehead_push', 'swallow_check', 'swallow_hold',
       ]);
       final press = steps.where((s) => s.marker == FaceMarker.cheek).toList();
       expect(press.map((s) => s.side), [FaceSide.left, FaceSide.right]);
@@ -485,6 +485,13 @@ void main() {
       expect(markers['saliva_parotid'], FaceMarker.parotid);
       expect(markers['saliva_submandibular'], FaceMarker.submandibular);
       expect(markers['saliva_sublingual'], FaceMarker.sublingual);
+    });
+
+    test('教材有寫注意事項的動作都要顯示:張口、額頭、吞嚥', () {
+      final withCaution = buildProgram(const KenkouSettings())
+          .where((s) => s.caution != null)
+          .map((s) => s.id);
+      expect(withCaution, ['mouth_open', 'forehead_push', 'swallow_hold']);
     });
 
     test('發音體操只放「大聲說」和要說的音,不放發音部位的小字', () {

@@ -94,6 +94,7 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
   const mouthOpen = '張口訓練';
   const tongueOut = '伸舌吞嚥體操';
   const forehead = '額頭體操';
+  const swallow = '吞嚥體操';
 
   return [
     ExerciseStep(
@@ -196,6 +197,25 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       ],
       detail: '用手掌推額頭,額頭出力抵住手掌',
       caution: '脖子會痛或有高血壓的人,請跳過',
+    ),
+    const ExerciseStep(
+      id: 'swallow_check',
+      section: swallow,
+      mode: StepMode.guided,
+      cues: [GuidedCue('手放在喉結上,吞口水', seconds: 20)],
+      detail: '確認喉結有往上抬',
+    ),
+    const ExerciseStep(
+      id: 'swallow_hold',
+      section: swallow,
+      mode: StepMode.guided,
+      cues: [
+        GuidedCue('吞口水,喉結往上抬', seconds: 7),
+        GuidedCue('喉結維持在上面', seconds: 5),
+        GuidedCue('一口氣把氣吐完', seconds: 8),
+      ],
+      detail: '手放在喉嚨,下巴稍微往內收',
+      caution: '維持不到 5 秒也沒關係,不要勉強',
     ),
   ];
 }
