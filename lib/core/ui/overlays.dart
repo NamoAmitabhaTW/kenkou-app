@@ -147,7 +147,7 @@ class CalibrationOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: Colors.black87,
+      color: Colors.black,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -175,9 +175,13 @@ class CalibrationOverlay extends StatelessWidget {
                 ),
               ),
               if (!hasFace) ...[
-                const SizedBox(height: 20),
-                const Text('沒有偵測到臉',
-                    style: TextStyle(color: Colors.redAccent, fontSize: 18)),
+                const SizedBox(height: 24),
+                const Text('沒有偵測到臉,請面對手機',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700)),
               ],
             ],
           ),

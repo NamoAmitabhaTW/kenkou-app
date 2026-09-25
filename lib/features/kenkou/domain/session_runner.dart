@@ -9,6 +9,8 @@ enum SessionEvent {
 
   rep,
 
+  rest,
+
   stepDone,
 }
 
@@ -35,6 +37,8 @@ class KenkouSession {
 
   bool stepComplete = false;
 
+  bool resting = false;
+
   int completedSteps = 0;
   int skippedSteps = 0;
 
@@ -53,6 +57,19 @@ class KenkouSession {
           ? step.shapes[subIndex + 1]
           : null;
 
+  GuidedCue? get currentCue =>
+      step.mode == StepMode.guided ? step.guidedCues[subIndex] : null;
+
+  FaceMarker get currentMarker => currentCue?.marker ?? step.marker;
+
+  int get currentRound {
+    final round = switch (step.mode) {
+      StepMode.guided => subIndex ~/ step.cues.length + 1,
+      _ => resting ? reps : reps + 1,
+    };
+    return round.clamp(1, step.reps);
+  }
+
   bool get isHolding =>
       _tracker?.state == HoldState.holding ||
       _tracker?.state == HoldState.completed;
@@ -63,17 +80,21 @@ class KenkouSession {
     reps = 0;
     subIndex = 0;
     stepComplete = false;
+    resting = false;
     _lastCountedAt = null;
     _tracker = step.usesFaceScore
         ? HoldTracker(
             enterThreshold: enterThreshold,
             exitThreshold: enterThreshold - 0.10,
             requiredHold: step.hold ?? defaultHold,
+            pauseOnDrop: step.pauseOnDrop,
           )
         : null;
   }
 
-  bool get _acceptsInput => !_finished && !stepComplete;
+  bool get _inStep => !_finished && !stepComplete;
+
+  bool get _acceptsInput => _inStep && !resting;
 
   SessionEvent onFaceScore(double score) {
     final tracker = _tracker;
@@ -89,6 +110,7 @@ class KenkouSession {
       return SessionEvent.partial;
     }
     subIndex = 0;
+    if (step.shapes.length > 1) tracker.reset();
     return _countRep();
   }
 
@@ -109,7 +131,19 @@ class KenkouSession {
 
   SessionEvent completeGuided() {
     if (!_acceptsInput || step.mode != StepMode.guided) return SessionEvent.none;
+    if (subIndex + 1 < step.guidedCues.length) {
+      subIndex++;
+      return SessionEvent.partial;
+    }
     return _complete();
+  }
+
+  SessionEvent finishRest() {
+    if (!_inStep || !resting) return SessionEvent.none;
+    resting = false;
+    _tracker?.reset();
+    if (reps >= step.reps) return _complete();
+    return SessionEvent.none;
   }
 
   SessionEvent countManually() {
@@ -118,12 +152,14 @@ class KenkouSession {
   }
 
   SessionEvent completeManually() {
-    if (!_acceptsInput) return SessionEvent.none;
+    if (!_inStep) return SessionEvent.none;
+    resting = false;
     return _complete();
   }
 
   SessionEvent skip() {
-    if (!_acceptsInput) return SessionEvent.none;
+    if (!_inStep) return SessionEvent.none;
+    resting = false;
     skippedSteps++;
     stepComplete = true;
     return SessionEvent.stepDone;
@@ -141,6 +177,10 @@ class KenkouSession {
 
   SessionEvent _countRep() {
     reps++;
+    if (step.rest != null) {
+      resting = true;
+      return SessionEvent.rest;
+    }
     if (reps >= step.reps) return _complete();
     return SessionEvent.rep;
   }

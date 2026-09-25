@@ -67,8 +67,8 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                 _heading(context, '次數與時間'),
                 NumberSettingRow(
                   icon: Icons.repeat,
-                  label: '每個嘴型動作:',
-                  unit: '次',
+                  label: '口唇、臉頰體操:',
+                  unit: '組',
                   value: s.faceReps,
                   min: kMinFaceReps,
                   max: kMaxFaceReps,
@@ -87,7 +87,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                 ),
                 NumberSettingRow(
                   icon: Icons.record_voice_over_outlined,
-                  label: '怕踏卡啦 每個音:',
+                  label: '發音體操 每個音:',
                   unit: '次',
                   value: s.patakaReps,
                   min: kMinPatakaReps,

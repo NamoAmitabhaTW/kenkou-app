@@ -3,19 +3,23 @@ import 'dart:math' as math;
 import 'package:face_mesh/face_mesh.dart';
 
 enum MouthShape {
-  neutral(label: '閉口'),
-  a(label: '啊'),
-  i(label: '衣'),
-  u(label: '嗚'),
-  e(label: '耶'),
-  o(label: '喔'),
-  pa(label: '趴'),
-  cheekPuff(label: '鼓起臉頰'),
-  cheekSuck(label: '收縮臉頰');
+  neutral(label: '閉口', prompt: '嘴巴閉起來'),
+  a(label: '啊', prompt: '嘴巴慢慢張大'),
+  i(label: '衣', prompt: '嘴角往兩邊拉開', sound: '衣～'),
+  u(label: '屋', prompt: '嘴唇往前噘起', sound: '屋～'),
+  e(label: '耶', prompt: '做出「耶」'),
+  o(label: '喔', prompt: '做出「喔」'),
+  pa(label: '趴', prompt: '嘴唇閉緊'),
+  cheekPuff(label: '鼓起臉頰', prompt: '鼓起臉頰'),
+  cheekSuck(label: '收縮臉頰', prompt: '縮起臉頰');
 
-  const MouthShape({required this.label});
+  const MouthShape({required this.label, required this.prompt, this.sound});
 
   final String label;
+
+  final String prompt;
+
+  final String? sound;
 }
 
 const _symmetricPairs = <String, List<String>>{
@@ -182,11 +186,14 @@ class HoldTracker {
     this.enterThreshold = 0.80,
     this.exitThreshold = 0.70,
     this.requiredHold = const Duration(milliseconds: 1500),
+    this.pauseOnDrop = false,
   });
 
   final double enterThreshold;
   final double exitThreshold;
   final Duration requiredHold;
+
+  final bool pauseOnDrop;
 
   HoldState state = HoldState.idle;
   Duration held = Duration.zero;
@@ -215,10 +222,10 @@ class HoldTracker {
       case HoldState.entering:
         if (score >= enterThreshold) {
           state = HoldState.holding;
-          held = Duration.zero;
+          if (!pauseOnDrop) held = Duration.zero;
         } else {
           state = score >= exitThreshold ? HoldState.entering : HoldState.idle;
-          held = Duration.zero;
+          if (!pauseOnDrop) held = Duration.zero;
         }
 
       case HoldState.holding:
@@ -230,7 +237,7 @@ class HoldTracker {
           }
         } else {
           state = HoldState.idle;
-          held = Duration.zero;
+          if (!pauseOnDrop) held = Duration.zero;
         }
 
       case HoldState.completed:
@@ -242,4 +249,7 @@ class HoldTracker {
   }
 
   double get progress => math.min(1.0, held.inMilliseconds / requiredHold.inMilliseconds);
+
+  Duration get remaining =>
+      held >= requiredHold ? Duration.zero : requiredHold - held;
 }

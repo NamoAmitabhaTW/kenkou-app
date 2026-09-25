@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:face_mesh/face_mesh.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futuremode2026/core/voice/syllable.dart';
+import 'package:futuremode2026/features/kenkou/domain/calibration.dart';
 import 'package:futuremode2026/features/kenkou/domain/exercise_program.dart';
 import 'package:futuremode2026/features/kenkou/domain/face_geometry.dart';
 import 'package:futuremode2026/features/kenkou/domain/settings.dart';
@@ -8,13 +11,13 @@ import 'package:futuremode2026/features/kenkou/domain/mouth_shape.dart';
 import 'package:futuremode2026/features/kenkou/domain/session_runner.dart';
 import 'package:futuremode2026/core/voice/syllable_map.dart';
 
+import 'support/face_frames.dart';
+
 void main() {
   ExerciseStep face(String id, List<MouthShape> shapes, {int reps = 2}) =>
       ExerciseStep(
         id: id,
         section: 's',
-        title: id,
-        instruction: '',
         mode: StepMode.face,
         shapes: shapes,
         reps: reps,
@@ -23,8 +26,6 @@ void main() {
   ExerciseStep speech(Syllable syllable, {int reps = 2}) => ExerciseStep(
         id: 'speech_${syllable.name}',
         section: 's',
-        title: '',
-        instruction: '',
         mode: StepMode.speech,
         syllable: syllable,
         reps: reps,
@@ -33,10 +34,8 @@ void main() {
   const guided = ExerciseStep(
     id: 'guided',
     section: 's',
-    title: '',
-    instruction: '',
     mode: StepMode.guided,
-    guidedSeconds: 5,
+    cues: [GuidedCue('做', seconds: 5)],
   );
 
   KenkouSession session(List<ExerciseStep> steps) =>
@@ -95,6 +94,21 @@ void main() {
 
       expect(doOneRep(s), SessionEvent.stepDone);
       expect(s.reps, 1);
+    });
+
+    test('多段動作做完一組就從頭開始,放鬆的臉分數偏高也不會卡住', () {
+      final s = session([
+        face('cheek', [MouthShape.cheekPuff, MouthShape.cheekSuck], reps: 2),
+      ]);
+      doOneRep(s);
+      s.onFaceScore(0.9);
+      expect(s.onFaceScore(0.9), SessionEvent.rep);
+      expect(s.targetShape, MouthShape.cheekPuff);
+
+      s.onFaceScore(0.71);
+      expect(s.tracker!.state, isNot(HoldState.completed));
+      s.onFaceScore(0.9);
+      expect(s.onFaceScore(0.9), SessionEvent.partial, reason: '下一組的鼓頰照常算');
     });
 
     test('次數到了之後的輸入全部忽略,直到 advance', () {
@@ -252,30 +266,305 @@ void main() {
     });
   });
 
-  group('整套內容', () {
-    test('次數跟著設定走', () {
-      const settings = KenkouSettings(faceReps: 7, patakaReps: 3);
-      final steps = buildProgram(settings);
+  group('休息(張口訓練)', () {
+    ExerciseStep withRest({int reps = 2}) => ExerciseStep(
+          id: 'open',
+          section: 's',
+          mode: StepMode.face,
+          shapes: const [MouthShape.a],
+          reps: reps,
+          rest: const Duration(seconds: 10),
+        );
 
-      final pucker = steps.firstWhere((s) => s.id == 'mouth_pucker');
-      expect(pucker.reps, 7);
+    test('做完一次先休息,休息完才做下一次;最後一次休息完才算完成', () {
+      final s = session([withRest(reps: 2), guided]);
 
-      final pataka = steps.where((s) => s.mode == StepMode.speech).toList();
-      expect(pataka, hasLength(4));
-      expect(pataka.every((s) => s.reps == 3), isTrue);
-      expect(pataka.map((s) => s.syllable).take(4), Syllable.values);
+      expect(doOneRep(s), SessionEvent.rest);
+      expect(s.reps, 1);
+      expect(s.resting, isTrue);
+      expect(s.currentRound, 1, reason: '休息屬於剛做完的第 1 次');
+
+      expect(s.finishRest(), SessionEvent.none);
+      expect(s.resting, isFalse);
+      expect(s.currentRound, 2);
+
+      expect(doOneRep(s), SessionEvent.rest);
+      expect(s.reps, 2);
+      expect(s.stepComplete, isFalse, reason: '最後一次也要先休息');
+
+      expect(s.finishRest(), SessionEvent.stepDone);
+      expect(s.completedSteps, 1);
     });
 
-    test('整套只有嘟嘴、張嘴、衣、舌頂左右、パタカラ 一組,共 9 個動作', () {
+    test('休息中嘴型分數不算數', () {
+      final s = session([withRest(reps: 3)]);
+      expect(doOneRep(s), SessionEvent.rest);
+      expect(doOneRep(s), SessionEvent.none);
+      expect(s.reps, 1);
+    });
+
+    test('休息完從頭開始下一次,不會停在上一次的「完成」', () {
+      final s = session([withRest(reps: 2)]);
+      s.onFaceScore(0.9);
+      s.onFaceScore(0.9);
+      expect(s.tracker!.state, HoldState.completed);
+
+      s.finishRest();
+      expect(s.tracker!.state, HoldState.idle);
+    });
+
+    test('休息中可以跳過,算跳過不算完成', () {
+      final s = session([withRest(), guided]);
+      doOneRep(s);
+      expect(s.skip(), SessionEvent.stepDone);
+      expect(s.resting, isFalse);
+      expect(s.skippedSteps, 1);
+      expect(s.completedSteps, 0);
+    });
+
+    test('沒在休息時 finishRest 沒有作用', () {
+      final s = session([withRest()]);
+      expect(s.finishRest(), SessionEvent.none);
+      expect(s.reps, 0);
+    });
+  });
+
+  group('分段的引導步驟', () {
+    const cued = ExerciseStep(
+      id: 'cued',
+      section: 's',
+      mode: StepMode.guided,
+      cues: [
+        GuidedCue('一', seconds: 3),
+        GuidedCue('二', seconds: 5),
+        GuidedCue('三', seconds: 4),
+      ],
+    );
+
+    test('每段倒數完換下一段,最後一段完才算完成', () {
+      final s = session([cued]);
+      expect(s.currentCue!.text, '一');
+
+      expect(s.completeGuided(), SessionEvent.partial);
+      expect(s.currentCue!.text, '二');
+      expect(s.currentCue!.seconds, 5);
+
+      expect(s.completeGuided(), SessionEvent.partial);
+      expect(s.completeGuided(), SessionEvent.stepDone);
+      expect(s.completedSteps, 1);
+    });
+
+    test('reps 大於 1 時整組分段重複做,第幾組跟著走', () {
+      const repeated = ExerciseStep(
+        id: 'cheeks',
+        section: 's',
+        mode: StepMode.guided,
+        reps: 3,
+        cues: [
+          GuidedCue('鼓起臉頰', seconds: 3),
+          GuidedCue('縮起臉頰', seconds: 3),
+        ],
+      );
+      final s = session([repeated]);
+      expect(s.step.guidedCues, hasLength(6));
+      expect(s.currentRound, 1);
+
+      expect(s.completeGuided(), SessionEvent.partial);
+      expect(s.currentCue!.text, '縮起臉頰');
+      expect(s.currentRound, 1, reason: '鼓起、縮起都做完才換下一組');
+
+      expect(s.completeGuided(), SessionEvent.partial);
+      expect(s.currentCue!.text, '鼓起臉頰');
+      expect(s.currentRound, 2);
+
+      s.completeGuided();
+      s.completeGuided();
+      s.completeGuided();
+      expect(s.currentRound, 3);
+      expect(s.completeGuided(), SessionEvent.stepDone);
+    });
+
+    test('換到下一個動作時分段從頭開始', () {
+      final s = session([cued, cued]);
+      s.completeGuided();
+      s.completeGuided();
+      s.completeGuided();
+      s.advance();
+      expect(s.currentCue!.text, '一');
+    });
+
+    test('嘴型步驟的第幾組是「正在做的那一組」', () {
+      final s = session([face('lips', [MouthShape.u, MouthShape.i], reps: 3)]);
+      expect(s.currentRound, 1);
+      doOneRep(s);
+      expect(s.currentRound, 1, reason: '屋做完、衣還沒,還在第 1 組');
+      doOneRep(s);
+      expect(s.currentRound, 2);
+    });
+
+    test('嘴型和語音步驟沒有分段提示', () {
+      expect(session([face('a', [MouthShape.a])]).currentCue, isNull);
+      expect(session([speech(Syllable.pa)]).currentCue, isNull);
+    });
+  });
+
+  group('整套內容', () {
+    test('次數跟著設定走,張口訓練照教材固定', () {
+      const settings = KenkouSettings(faceReps: 7, patakaReps: 3);
+      final steps = buildProgram(settings);
+      ExerciseStep byId(String id) => steps.firstWhere((s) => s.id == id);
+
+      expect(byId('lips_u_i').reps, 7);
+      expect(byId('cheek_puff_suck').reps, 7);
+      expect(byId('mouth_open').reps, 2);
+
+      final pataka = steps.where((s) => s.mode == StepMode.speech).toList();
+      expect(pataka, hasLength(4 * kPatakaSets));
+      expect(pataka.every((s) => s.reps == 3), isTrue);
+      expect(pataka.map((s) => s.syllable),
+          [...Syllable.values, ...Syllable.values]);
+    });
+
+    test('整套 24 個動作', () {
       final steps = buildProgram(const KenkouSettings());
       expect(steps.map((s) => s.id), [
-        'mouth_pucker', 'mouth_open', 'mouth_ii',
+        'lips_u_i', 'cheek_puff_suck',
         'tongue_press_left', 'tongue_press_right',
         'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1',
+        'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2',
+        'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual',
+        'mouth_open',
+        'tongue_out_swallow', 'forehead_push', 'swallow_check', 'swallow_hold',
+        'tongue_down', 'tongue_up', 'tongue_sides', 'tongue_circle',
       ]);
       final press = steps.where((s) => s.marker == FaceMarker.cheek).toList();
       expect(press.map((s) => s.side), [FaceSide.left, FaceSide.right]);
       expect(press.every((s) => s.mode == StepMode.guided), isTrue);
+    });
+
+    test('體操名稱與順序跟 README 的健口操動作表一致', () {
+      final lines = File('README.md').readAsLinesSync();
+      final header = lines.indexWhere((l) => l.startsWith('| 動作 | 說明 | 判定方式'));
+      expect(header, isNot(-1), reason: 'README 裡找不到健口操動作表');
+
+      final readme = <String>[];
+      for (final line in lines.skip(header + 2)) {
+        if (!line.startsWith('|')) break;
+        final cells = line.split('|').map((c) => c.trim()).toList();
+        if (cells[3].contains('規劃中')) continue;
+        readme.add(cells[1]);
+      }
+
+      final program = <String>[];
+      for (final step in buildProgram(const KenkouSettings())) {
+        final name = step.section.split(' ').first;
+        if (program.isEmpty || program.last != name) program.add(name);
+      }
+      expect(program, readme);
+    });
+
+    test('口唇是先屋再衣算一組;臉頰改成倒數引導,鼓起、縮起算一組', () {
+      final steps = buildProgram(const KenkouSettings(faceReps: 5));
+      ExerciseStep byId(String id) => steps.firstWhere((s) => s.id == id);
+
+      final lips = byId('lips_u_i');
+      expect(lips.mode, StepMode.face);
+      expect(lips.shapes, [MouthShape.u, MouthShape.i]);
+      expect(lips.hold, isNull);
+      expect(lips.pauseOnDrop, isFalse);
+      expect(lips.rest, isNull);
+
+      final cheeks = byId('cheek_puff_suck');
+      expect(cheeks.mode, StepMode.guided);
+      expect(cheeks.cues.map((c) => c.text), ['鼓起臉頰', '縮起臉頰']);
+      expect(cheeks.cues.map((c) => c.seconds), [5, 5]);
+      expect(cheeks.guidedCues, hasLength(10));
+    });
+
+    test('張口訓練:張口維持 10 秒(掉下去暫停)、閉口休息 10 秒,有注意事項', () {
+      final open = buildProgram(const KenkouSettings())
+          .firstWhere((s) => s.id == 'mouth_open');
+      expect(open.shapes, [MouthShape.a]);
+      expect(open.hold, const Duration(seconds: 10));
+      expect(open.pauseOnDrop, isTrue);
+      expect(open.rest, const Duration(seconds: 10));
+      expect(open.caution, isNotNull);
+
+      final s = KenkouSession(
+          steps: [open], defaultHold: const Duration(milliseconds: 1500));
+      expect(s.tracker!.requiredHold, const Duration(seconds: 10));
+      expect(s.tracker!.pauseOnDrop, isTrue);
+    });
+
+    test('引導步驟都有分段提示,每一段都有字、倒數都大於 0 秒', () {
+      final guidedSteps = buildProgram(const KenkouSettings())
+          .where((s) => s.mode == StepMode.guided);
+      for (final step in guidedSteps) {
+        expect(step.guidedCues, isNotEmpty, reason: step.id);
+        for (final cue in step.guidedCues) {
+          expect(cue.text, isNotEmpty, reason: step.id);
+          expect(cue.seconds, greaterThan(0), reason: step.id);
+        }
+      }
+    });
+
+    test('從伸舌吞嚥體操開始每個動作都是 20 秒(舌頭繞圈兩個方向各 15 秒),'
+        '吞嚥「維持」那一段固定 5 秒', () {
+      final steps = buildProgram(const KenkouSettings());
+      final from = steps.indexWhere((s) => s.id == 'tongue_out_swallow');
+      for (final step in steps.skip(from)) {
+        final total = step.guidedCues.fold(0, (sum, c) => sum + c.seconds);
+        expect(total, step.id == 'tongue_circle' ? 30 : 20, reason: step.id);
+      }
+      final hold = steps.firstWhere((s) => s.id == 'swallow_hold');
+      expect(hold.cues.firstWhere((c) => c.text.contains('維持')).seconds, 5);
+    });
+
+    test('按摩與舌頭訓練都有臉上的標記', () {
+      final markers = {
+        for (final s in buildProgram(const KenkouSettings())) s.id: s.marker,
+      };
+      expect(markers['saliva_parotid'], FaceMarker.parotid);
+      expect(markers['saliva_submandibular'], FaceMarker.submandibular);
+      expect(markers['saliva_sublingual'], FaceMarker.sublingual);
+      expect(markers['tongue_down'], FaceMarker.tongueDown);
+      expect(markers['tongue_up'], FaceMarker.tongueUp);
+      expect(markers['tongue_sides'], FaceMarker.tongueSides);
+    });
+
+    test('舌頭繞圈:先順時針 15 秒、再逆時針 15 秒,箭頭跟著換方向', () {
+      final circle = buildProgram(const KenkouSettings())
+          .firstWhere((s) => s.id == 'tongue_circle');
+      expect(circle.cues.map((c) => c.seconds), [15, 15]);
+      expect(circle.cues.map((c) => c.marker), [
+        FaceMarker.tongueCircleClockwise,
+        FaceMarker.tongueCircleCounterclockwise,
+      ]);
+
+      final s = KenkouSession(steps: [circle], defaultHold: Duration.zero);
+      expect(s.currentMarker, FaceMarker.tongueCircleClockwise);
+      s.completeGuided();
+      expect(s.currentMarker, FaceMarker.tongueCircleCounterclockwise);
+    });
+
+    test('分段沒指定標記時,沿用步驟的標記', () {
+      final down = buildProgram(const KenkouSettings())
+          .firstWhere((s) => s.id == 'tongue_down');
+      final s = KenkouSession(steps: [down], defaultHold: Duration.zero);
+      expect(s.currentMarker, FaceMarker.tongueDown);
+    });
+
+    test('教材有寫注意事項的動作都要顯示:張口、額頭、吞嚥', () {
+      final withCaution = buildProgram(const KenkouSettings())
+          .where((s) => s.caution != null)
+          .map((s) => s.id);
+      expect(withCaution, ['mouth_open', 'forehead_push', 'swallow_hold']);
+    });
+
+    test('發音體操只放「大聲說」和要說的音,不放發音部位的小字', () {
+      final pataka = buildProgram(const KenkouSettings())
+          .where((s) => s.mode == StepMode.speech);
+      expect(pataka.every((s) => s.detail == null), isTrue);
     });
 
     test('動作 id 不重複', () {
@@ -342,6 +631,121 @@ void main() {
       final lips = LipsClosedDetector()
         ..calibrate([const FaceFrame(hasFace: false)]);
       expect(lips.threshold, closeTo(0.014, 1e-9));
+    });
+  });
+
+  group('校正', () {
+    const face = FaceFrame(hasFace: true);
+    const noFace = FaceFrame(hasFace: false);
+    final t0 = DateTime(2026);
+    Duration ms(int n) => Duration(milliseconds: n);
+
+    Duration? feed(CalibrationWindow w, FaceFrame frame, Duration from,
+        Duration until) {
+      for (var t = from; t <= until; t += ms(33)) {
+        if (w.add(frame, t0.add(t))) return t;
+      }
+      return null;
+    }
+
+    test('臉一直都在:5 秒做完,只收後 2 秒「放鬆」的影格', () {
+      final w = CalibrationWindow();
+      final doneAt = feed(w, face, Duration.zero, ms(6000))!;
+      expect(doneAt, greaterThanOrEqualTo(ms(5000)));
+      expect(doneAt, lessThan(ms(5100)));
+      expect(w.frames.length, inInclusiveRange(55, 65), reason: '約 2 秒 × 30 張');
+    });
+
+    test('一開始沒對到鏡頭:先提醒,臉出現才開始算完整 5 秒', () {
+      final w = CalibrationWindow();
+      expect(feed(w, noFace, Duration.zero, ms(4000)), isNull);
+      expect(w.progress(t0.add(ms(4000))), 0);
+      expect(w.faceMissing(t0.add(ms(4000))), isTrue);
+
+      final doneAt = feed(w, face, ms(4033), ms(12000))!;
+      expect(doneAt, greaterThanOrEqualTo(ms(4033 + 5000)));
+    });
+
+    test('做到一半離開、最後一刻才回來:整段重來,不拿剛回來的臉湊數', () {
+      final w = CalibrationWindow();
+      feed(w, face, Duration.zero, ms(1000));
+      expect(feed(w, noFace, ms(1033), ms(4800)), isNull);
+      expect(w.progress(t0.add(ms(4800))), 0, reason: '臉不見超過 0.5 秒就重來');
+
+      final doneAt = feed(w, face, ms(4833), ms(12000))!;
+      expect(doneAt, greaterThanOrEqualTo(ms(4833 + 5000)));
+    });
+
+    test('偵測偶爾漏一兩張沒關係,不會整段重來', () {
+      final w = CalibrationWindow();
+      feed(w, face, Duration.zero, ms(2000));
+      w.add(noFace, t0.add(ms(2033)));
+      w.add(noFace, t0.add(ms(2066)));
+      final doneAt = feed(w, face, ms(2099), ms(6000))!;
+      expect(doneAt, lessThan(ms(5100)));
+      expect(w.faceMissing(t0.add(ms(2066))), isFalse);
+    });
+
+    test('偵測太慢、影格不夠就繼續等', () {
+      final w = CalibrationWindow();
+      Duration? doneAt;
+      for (var t = 0; t <= 12000 && doneAt == null; t += 300) {
+        if (w.add(face, t0.add(ms(t)))) doneAt = ms(t);
+      }
+      expect(doneAt, greaterThan(ms(5000)));
+      expect(w.frames.length, greaterThanOrEqualTo(w.minFrames));
+    });
+
+    test('剛開始第一張影格還沒到,不急著說沒偵測到臉', () {
+      final w = CalibrationWindow();
+      w.add(noFace, t0);
+      expect(w.faceMissing(t0.add(ms(300))), isFalse);
+      expect(w.faceMissing(t0.add(ms(600))), isTrue);
+    });
+  });
+
+  group('唾液腺按摩的位置', () {
+    test('耳下腺:耳前往同一邊的嘴角走兩成', () {
+      final points = FaceGeometry.parotidPoints(contourFrame());
+      expect(points, hasLength(2));
+      expect(points[0].dx, closeTo(0.284, 1e-4));
+      expect(points[0].dy, closeTo(0.484, 1e-4));
+      expect(points[1].dx, closeTo(0.716, 1e-4));
+      expect(points[1].dy, closeTo(0.484, 1e-4));
+    });
+
+    test('耳前兩點的順序對調,還是配到同一邊的嘴角', () {
+      final points = FaceGeometry.parotidPoints(contourFrame(
+          earA: const Offset(0.75, 0.45), earB: const Offset(0.25, 0.45)));
+      expect(points[0].dx, closeTo(0.716, 1e-4));
+      expect(points[1].dx, closeTo(0.284, 1e-4));
+    });
+
+    test('顎下腺:兩邊各 4 點,從下顎角往下巴排,再往下挪到下顎線內側', () {
+      final rows = FaceGeometry.submandibularPoints(contourFrame());
+      expect(rows, hasLength(2));
+      for (final row in rows) {
+        expect(row, hasLength(4));
+        for (var i = 1; i < row.length; i++) {
+          expect((row[i].dx - 0.5).abs(), lessThan((row[i - 1].dx - 0.5).abs()),
+              reason: '越後面的點越靠近下巴');
+        }
+      }
+      expect(rows[0][0].dx, closeTo(0.32, 1e-4));
+      expect(rows[0][0].dy, closeTo(0.651 + 0.23 * 0.08, 1e-4));
+    });
+
+    test('舌下腺:下巴再往下一點', () {
+      final point = FaceGeometry.sublingualPoint(contourFrame())!;
+      expect(point.dx, closeTo(0.5, 1e-4));
+      expect(point.dy, closeTo(0.75 + 0.23 * 0.15, 1e-4));
+    });
+
+    test('原生端沒送錨點時不標', () {
+      const frame = FaceFrame(hasFace: true);
+      expect(FaceGeometry.parotidPoints(frame), isEmpty);
+      expect(FaceGeometry.submandibularPoints(frame), isEmpty);
+      expect(FaceGeometry.sublingualPoint(frame), isNull);
     });
   });
 }

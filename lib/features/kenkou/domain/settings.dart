@@ -12,7 +12,7 @@ const kMaxStrictness = 95;
 class KenkouSettings {
   const KenkouSettings({
     this.faceReps = 5,
-    this.holdMillis = 1500,
+    this.holdMillis = 3000,
     this.patakaReps = 8,
     this.strictness = 80,
     this.voiceSensitivity = kDefaultVoiceSensitivity,
