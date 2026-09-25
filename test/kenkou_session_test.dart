@@ -1,6 +1,7 @@
 import 'package:face_mesh/face_mesh.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futuremode2026/core/voice/syllable.dart';
+import 'package:futuremode2026/features/kenkou/domain/calibration.dart';
 import 'package:futuremode2026/features/kenkou/domain/exercise_program.dart';
 import 'package:futuremode2026/features/kenkou/domain/face_geometry.dart';
 import 'package:futuremode2026/features/kenkou/domain/settings.dart';
@@ -503,6 +504,76 @@ void main() {
       final lips = LipsClosedDetector()
         ..calibrate([const FaceFrame(hasFace: false)]);
       expect(lips.threshold, closeTo(0.014, 1e-9));
+    });
+  });
+
+  group('校正', () {
+    const face = FaceFrame(hasFace: true);
+    const noFace = FaceFrame(hasFace: false);
+    final t0 = DateTime(2026);
+    Duration ms(int n) => Duration(milliseconds: n);
+
+    Duration? feed(CalibrationWindow w, FaceFrame frame, Duration from,
+        Duration until) {
+      for (var t = from; t <= until; t += ms(33)) {
+        if (w.add(frame, t0.add(t))) return t;
+      }
+      return null;
+    }
+
+    test('臉一直都在:5 秒做完,只收後 2 秒「放鬆」的影格', () {
+      final w = CalibrationWindow();
+      final doneAt = feed(w, face, Duration.zero, ms(6000))!;
+      expect(doneAt, greaterThanOrEqualTo(ms(5000)));
+      expect(doneAt, lessThan(ms(5100)));
+      expect(w.frames.length, inInclusiveRange(55, 65), reason: '約 2 秒 × 30 張');
+    });
+
+    test('一開始沒對到鏡頭:先提醒,臉出現才開始算完整 5 秒', () {
+      final w = CalibrationWindow();
+      expect(feed(w, noFace, Duration.zero, ms(4000)), isNull);
+      expect(w.progress(t0.add(ms(4000))), 0);
+      expect(w.faceMissing(t0.add(ms(4000))), isTrue);
+
+      final doneAt = feed(w, face, ms(4033), ms(12000))!;
+      expect(doneAt, greaterThanOrEqualTo(ms(4033 + 5000)));
+    });
+
+    test('做到一半離開、最後一刻才回來:整段重來,不拿剛回來的臉湊數', () {
+      final w = CalibrationWindow();
+      feed(w, face, Duration.zero, ms(1000));
+      expect(feed(w, noFace, ms(1033), ms(4800)), isNull);
+      expect(w.progress(t0.add(ms(4800))), 0, reason: '臉不見超過 0.5 秒就重來');
+
+      final doneAt = feed(w, face, ms(4833), ms(12000))!;
+      expect(doneAt, greaterThanOrEqualTo(ms(4833 + 5000)));
+    });
+
+    test('偵測偶爾漏一兩張沒關係,不會整段重來', () {
+      final w = CalibrationWindow();
+      feed(w, face, Duration.zero, ms(2000));
+      w.add(noFace, t0.add(ms(2033)));
+      w.add(noFace, t0.add(ms(2066)));
+      final doneAt = feed(w, face, ms(2099), ms(6000))!;
+      expect(doneAt, lessThan(ms(5100)));
+      expect(w.faceMissing(t0.add(ms(2066))), isFalse);
+    });
+
+    test('偵測太慢、影格不夠就繼續等', () {
+      final w = CalibrationWindow();
+      Duration? doneAt;
+      for (var t = 0; t <= 12000 && doneAt == null; t += 300) {
+        if (w.add(face, t0.add(ms(t)))) doneAt = ms(t);
+      }
+      expect(doneAt, greaterThan(ms(5000)));
+      expect(w.frames.length, greaterThanOrEqualTo(w.minFrames));
+    });
+
+    test('剛開始第一張影格還沒到,不急著說沒偵測到臉', () {
+      final w = CalibrationWindow();
+      w.add(noFace, t0);
+      expect(w.faceMissing(t0.add(ms(300))), isFalse);
+      expect(w.faceMissing(t0.add(ms(600))), isTrue);
     });
   });
 }

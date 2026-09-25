@@ -12,6 +12,7 @@ import '../domain/mouth_shape.dart';
 import '../../../core/ui/overlays.dart';
 import '../../../core/voice/pataka_detector.dart';
 import '../../../core/voice/syllable.dart';
+import '../domain/calibration.dart';
 import '../domain/exercise_program.dart';
 import '../domain/face_geometry.dart';
 import 'face_markers.dart';
@@ -31,11 +32,6 @@ enum SessionPhase {
 
   done,
 }
-
-const _calibrationPrepare = Duration(seconds: 3);
-const _calibrationTotal = Duration(seconds: 5);
-
-const _calibrationMinFrames = 20;
 
 class KenkouSessionPage extends StatefulWidget {
   const KenkouSessionPage({super.key, required this.settings});
@@ -72,8 +68,8 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
   String? _cameraError;
   FaceFrame _frame = const FaceFrame(hasFace: false);
   double _targetScore = 0;
-  List<FaceFrame>? _calibrationBuffer;
-  DateTime? _calibrationStartedAt;
+
+  CalibrationWindow? _calibration;
 
   final _lipsHistory = <(DateTime, bool)>[];
 
@@ -132,8 +128,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
 
     setState(() {
       _phase = SessionPhase.calibrating;
-      _calibrationBuffer = [];
-      _calibrationStartedAt = DateTime.now();
+      _calibration = CalibrationWindow();
     });
   }
 
@@ -170,7 +165,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     if (!mounted) return;
     _recordLips(frame);
 
-    if (_calibrationBuffer != null) {
+    if (_calibration != null) {
       _collectCalibrationFrame(frame);
       return;
     }
@@ -197,29 +192,19 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
   }
 
   void _collectCalibrationFrame(FaceFrame frame) {
-    final buffer = _calibrationBuffer!;
-    final elapsed = _calibrationElapsed;
-    if (elapsed >= _calibrationPrepare && frame.hasFace) buffer.add(frame);
-    if (elapsed >= _calibrationTotal && buffer.length >= _calibrationMinFrames) {
-      _classifier.calibrate(buffer);
-      _lips.calibrate(buffer);
-      _calibrationBuffer = null;
-      _calibrationStartedAt = null;
+    final calibration = _calibration!;
+    if (calibration.add(frame, DateTime.now())) {
+      final frames = calibration.frames;
+      _classifier.calibrate(frames);
+      _lips.calibrate(frames);
+      _calibration = null;
       _phase = SessionPhase.running;
       _enterStep();
     }
     setState(() => _frame = frame);
   }
 
-  Duration get _calibrationElapsed => _calibrationStartedAt == null
-      ? Duration.zero
-      : DateTime.now().difference(_calibrationStartedAt!);
-
   static const _calibrationHeadline = '嘴巴閉起來\n放鬆';
-
-  double get _calibrationProgress =>
-      (_calibrationElapsed.inMilliseconds / _calibrationTotal.inMilliseconds)
-          .clamp(0.0, 1.0);
 
   double _scoreFor(ExerciseStep step, FaceFrame frame) {
     if (!frame.isPoseUsable) return 0;
@@ -501,8 +486,8 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
           if (_phase == SessionPhase.calibrating)
             CalibrationOverlay(
               headline: _calibrationHeadline,
-              progress: _calibrationProgress,
-              hasFace: _frame.hasFace,
+              progress: _calibration?.progress(DateTime.now()) ?? 0,
+              hasFace: !(_calibration?.faceMissing(DateTime.now()) ?? false),
             ),
           if (_cameraError != null) CameraErrorOverlay(message: _cameraError!),
         ],
