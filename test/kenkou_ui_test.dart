@@ -157,7 +157,8 @@ void main() {
       expect(tester.getRect(find.text('嘴唇往前噘起')), without);
     });
 
-    testWidgets('發音體操:要說的音放在「大聲說」右邊,放到最大', (tester) async {
+    testWidgets('發音體操:要說的音放在「大聲說」右邊,放到最大,不放部位的說明',
+        (tester) async {
       final pa = buildProgram(const KenkouSettings(patakaReps: 8))
           .firstWhere((s) => s.id == 'pataka_pa_1');
       final session = KenkouSession(steps: [pa], defaultHold: _hold);
@@ -167,7 +168,7 @@ void main() {
       expect(find.text('大聲說'), findsOneWidget);
       expect(find.text('怕'), findsOneWidget);
       expect(find.text('1 / 8 次'), findsOneWidget);
-      expect(find.text('嘴唇先閉緊,再用力彈開'), findsOneWidget);
+      expect(find.text('嘴唇先閉緊,再用力彈開'), findsNothing);
       final prompt = tester.getRect(find.text('大聲說'));
       final sound = tester.getRect(find.text('怕'));
       expect(sound.left, greaterThan(prompt.right));

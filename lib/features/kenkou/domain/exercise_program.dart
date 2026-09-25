@@ -78,11 +78,12 @@ class ExerciseStep {
   List<GuidedCue> get guidedCues => [for (var i = 0; i < reps; i++) ...cues];
 }
 
+const kPatakaSets = 2;
+
 List<ExerciseStep> buildProgram(KenkouSettings s) {
   const lips = '口唇體操';
   const cheeks = '嘴唇與臉頰體操';
   const tonguePress = '舌壓訓練';
-  const pataka = '發音體操';
 
   return [
     ExerciseStep(
@@ -127,19 +128,14 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       cues: [GuidedCue('舌頭用力頂住右邊臉頰', seconds: 20)],
       detail: '手指從外面按住抵抗,慢慢頂 10 次',
     ),
-    for (final syllable in Syllable.values)
-      ExerciseStep(
-        id: 'pataka_${syllable.name}_1',
-        section: pataka,
-        mode: StepMode.speech,
-        syllable: syllable,
-        reps: s.patakaReps,
-        detail: switch (syllable) {
-          Syllable.pa => '嘴唇先閉緊,再用力彈開',
-          Syllable.ta => '舌尖抵住上排門牙後面,再彈開',
-          Syllable.ka => '舌根抵住上顎後方,再放開',
-          Syllable.ra => '舌頭往上捲,再放下來',
-        },
-      ),
+    for (var set = 1; set <= kPatakaSets; set++)
+      for (final syllable in Syllable.values)
+        ExerciseStep(
+          id: 'pataka_${syllable.name}_$set',
+          section: '發音體操 第 $set 組',
+          mode: StepMode.speech,
+          syllable: syllable,
+          reps: s.patakaReps,
+        ),
   ];
 }

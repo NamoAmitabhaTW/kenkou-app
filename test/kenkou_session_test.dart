@@ -414,15 +414,16 @@ void main() {
       expect(byId('cheek_puff_suck').reps, 7);
 
       final pataka = steps.where((s) => s.mode == StepMode.speech).toList();
-      expect(pataka, hasLength(4));
+      expect(pataka, hasLength(4 * kPatakaSets));
       expect(pataka.every((s) => s.reps == 3), isTrue);
-      expect(pataka.map((s) => s.syllable), Syllable.values);
+      expect(pataka.map((s) => s.syllable),
+          [...Syllable.values, ...Syllable.values]);
     });
 
-    test('整套 9 個動作', () {
+    test('整套 13 個動作', () {
       final steps = buildProgram(const KenkouSettings());
       expect(steps.map((s) => s.id), [
-        'lips_u_i', 'mouth_open', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1',
+        'lips_u_i', 'mouth_open', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2',
       ]);
       final press = steps.where((s) => s.marker == FaceMarker.cheek).toList();
       expect(press.map((s) => s.side), [FaceSide.left, FaceSide.right]);
@@ -457,6 +458,12 @@ void main() {
           expect(cue.seconds, greaterThan(0), reason: step.id);
         }
       }
+    });
+
+    test('發音體操只放「大聲說」和要說的音,不放發音部位的小字', () {
+      final pataka = buildProgram(const KenkouSettings())
+          .where((s) => s.mode == StepMode.speech);
+      expect(pataka.every((s) => s.detail == null), isTrue);
     });
 
     test('動作 id 不重複', () {

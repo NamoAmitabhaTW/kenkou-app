@@ -87,7 +87,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                 ),
                 NumberSettingRow(
                   icon: Icons.record_voice_over_outlined,
-                  label: '怕踏卡啦 每個音:',
+                  label: '發音體操 每個音:',
                   unit: '次',
                   value: s.patakaReps,
                   min: kMinPatakaReps,
