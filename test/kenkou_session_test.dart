@@ -423,10 +423,10 @@ void main() {
           [...Syllable.values, ...Syllable.values]);
     });
 
-    test('整套 16 個動作', () {
+    test('整套 17 個動作', () {
       final steps = buildProgram(const KenkouSettings());
       expect(steps.map((s) => s.id), [
-        'lips_u_i', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2', 'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual', 'mouth_open',
+        'lips_u_i', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2', 'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual', 'mouth_open', 'tongue_out_swallow',
       ]);
       final press = steps.where((s) => s.marker == FaceMarker.cheek).toList();
       expect(press.map((s) => s.side), [FaceSide.left, FaceSide.right]);

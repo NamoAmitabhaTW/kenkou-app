@@ -92,6 +92,7 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
   const tonguePress = '舌壓訓練';
   const saliva = '唾液腺按摩';
   const mouthOpen = '張口訓練';
+  const tongueOut = '伸舌吞嚥體操';
 
   return [
     ExerciseStep(
@@ -174,6 +175,15 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       rest: const Duration(seconds: 10),
       detail: '張到最大,維持 10 秒',
       caution: '張口不要勉強,以不會痛為限',
+    ),
+    const ExerciseStep(
+      id: 'tongue_out_swallow',
+      section: tongueOut,
+      mode: StepMode.guided,
+      cues: [
+        GuidedCue('舌頭稍微伸出來', seconds: 6),
+        GuidedCue('閉上嘴巴吞口水', seconds: 14),
+      ],
     ),
   ];
 }
