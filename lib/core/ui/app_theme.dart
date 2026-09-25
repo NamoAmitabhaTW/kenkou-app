@@ -12,6 +12,8 @@ const kWrongRed = Color(0xFF7A2E2E);
 
 const kAlertRed = Color(0xFFFF6B6B);
 
+const kCautionAmber = Color(0xFFFFC857);
+
 const kSurfaceDark = Color(0xFF1C1C1E);
 const kSurfaceDarkRaised = Color(0xFF2C2C2E);
 

@@ -17,12 +17,17 @@ enum FaceMarker {
   cheek,
 }
 
+class GuidedCue {
+  const GuidedCue(this.text, {required this.seconds}) : assert(seconds > 0);
+
+  final String text;
+  final int seconds;
+}
+
 class ExerciseStep {
   const ExerciseStep({
     required this.id,
     required this.section,
-    required this.title,
-    required this.instruction,
     required this.mode,
     this.shapes = const [],
     this.syllable,
@@ -30,17 +35,20 @@ class ExerciseStep {
     this.marker = FaceMarker.none,
     this.reps = 1,
     this.hold,
-    this.guidedSeconds = 20,
+    this.pauseOnDrop = false,
+    this.rest,
+    this.cues = const [],
+    this.detail,
     this.caution,
   }) : assert(mode != StepMode.face || shapes.length > 0),
        assert(mode != StepMode.speech || syllable != null),
-       assert(marker != FaceMarker.cheek || side != null);
+       assert(marker != FaceMarker.cheek || side != null),
+       assert(rest == null || mode == StepMode.face),
+       assert(mode == StepMode.guided || cues.length == 0);
 
   final String id;
 
   final String section;
-  final String title;
-  final String instruction;
   final StepMode mode;
 
   final List<MouthShape> shapes;
@@ -55,87 +63,79 @@ class ExerciseStep {
 
   final Duration? hold;
 
-  final int guidedSeconds;
+  final bool pauseOnDrop;
+
+  final Duration? rest;
+
+  final List<GuidedCue> cues;
+
+  final String? detail;
 
   final String? caution;
 
   bool get usesFaceScore => mode == StepMode.face;
+
+  List<GuidedCue> get guidedCues => [for (var i = 0; i < reps; i++) ...cues];
 }
 
 List<ExerciseStep> buildProgram(KenkouSettings s) {
-  const mouth = '嘴巴的體操';
-  const tongue = '舌頭的體操(舌壓訓練)';
-  const pataka = '怕踏卡啦體操';
+  const lips = '口唇體操';
+  const tonguePress = '舌壓訓練';
+  const pataka = '發音體操';
 
   return [
     ExerciseStep(
       id: 'mouth_pucker',
-      section: mouth,
-      title: '① 嘟嘴',
-      instruction: '嘴唇往前噘起來,像要親一下,用力維持住',
+      section: lips,
       mode: StepMode.face,
       shapes: const [MouthShape.u],
       reps: s.faceReps,
     ),
     ExerciseStep(
       id: 'mouth_open',
-      section: mouth,
-      title: '② 張大嘴巴',
-      instruction: '嘴巴張到最大,像要說「啊～」,用力維持住',
+      section: lips,
       mode: StepMode.face,
       shapes: const [MouthShape.a],
       reps: s.faceReps,
     ),
     ExerciseStep(
       id: 'mouth_ii',
-      section: mouth,
-      title: '③ 唸「衣～」橫向拉開',
-      instruction: '嘴角往兩邊用力拉開,發出「衣～」',
+      section: lips,
       mode: StepMode.face,
       shapes: const [MouthShape.i],
       reps: s.faceReps,
     ),
     const ExerciseStep(
       id: 'tongue_press_left',
-      section: tongue,
-      title: '舌頭頂左邊臉頰',
-      instruction:
-          '舌頭用力頂住畫面圈起來的那一邊臉頰內側,把臉頰頂出來。'
-          '可以用手指從外面壓住,讓舌頭抵抗,慢慢頂 10 次',
+      section: tonguePress,
       mode: StepMode.guided,
       side: FaceSide.left,
       marker: FaceMarker.cheek,
-      guidedSeconds: 20,
+      cues: [GuidedCue('舌頭用力頂住左邊臉頰', seconds: 20)],
+      detail: '手指從外面按住抵抗,慢慢頂 10 次',
     ),
     const ExerciseStep(
       id: 'tongue_press_right',
-      section: tongue,
-      title: '舌頭頂右邊臉頰',
-      instruction: '換另一邊,同樣把圈起來的那一邊臉頰頂出來,慢慢頂 10 次',
+      section: tonguePress,
       mode: StepMode.guided,
       side: FaceSide.right,
       marker: FaceMarker.cheek,
-      guidedSeconds: 20,
+      cues: [GuidedCue('舌頭用力頂住右邊臉頰', seconds: 20)],
+      detail: '手指從外面按住抵抗,慢慢頂 10 次',
     ),
     for (final syllable in Syllable.values)
       ExerciseStep(
         id: 'pataka_${syllable.name}_1',
         section: pataka,
-        title: '${switch (syllable) {
-          Syllable.pa => '①',
-          Syllable.ta => '②',
-          Syllable.ka => '③',
-          Syllable.ra => '④',
-        }} ${syllable.label}',
-        instruction: switch (syllable) {
-          Syllable.pa => '嘴唇先閉緊,再用力彈開,清楚地說出來',
+        mode: StepMode.speech,
+        syllable: syllable,
+        reps: s.patakaReps,
+        detail: switch (syllable) {
+          Syllable.pa => '嘴唇先閉緊,再用力彈開',
           Syllable.ta => '舌尖抵住上排門牙後面,再彈開',
           Syllable.ka => '舌根抵住上顎後方,再放開',
           Syllable.ra => '舌頭往上捲,再放下來',
         },
-        mode: StepMode.speech,
-        syllable: syllable,
-        reps: s.patakaReps,
       ),
   ];
 }

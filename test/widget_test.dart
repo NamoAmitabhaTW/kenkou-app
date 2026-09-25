@@ -69,5 +69,48 @@ void main() {
       tracker.update(0.1);
       expect(tracker.state, HoldState.idle);
     });
+
+    test('暫停模式:維持到一半掉下去,計時停住,做回來接著數', () async {
+      final tracker = HoldTracker(
+          requiredHold: const Duration(milliseconds: 400), pauseOnDrop: true);
+      tracker.update(0.9);
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      tracker.update(0.9);
+      final before = tracker.held;
+      expect(before, greaterThan(Duration.zero));
+
+      tracker.update(0.1);
+      expect(tracker.state, HoldState.idle);
+      expect(tracker.held, before, reason: '計時停住,不歸零');
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      tracker.update(0.9);
+      expect(tracker.state, HoldState.holding);
+      expect(tracker.held, before);
+
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      tracker.update(0.9);
+      expect(tracker.completions, 1, reason: '前後兩段加起來超過 400 毫秒');
+    });
+
+    test('預設模式:掉下去就歸零重來', () async {
+      final tracker =
+          HoldTracker(requiredHold: const Duration(milliseconds: 400));
+      tracker.update(0.9);
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      tracker.update(0.9);
+      tracker.update(0.1);
+      expect(tracker.held, Duration.zero);
+
+      tracker.update(0.9);
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      tracker.update(0.9);
+      expect(tracker.completions, 0, reason: '只算得到後面那一段');
+    });
+
+    test('還要維持多久', () {
+      final tracker = HoldTracker(requiredHold: const Duration(seconds: 10));
+      expect(tracker.remaining, const Duration(seconds: 10));
+    });
   });
 }

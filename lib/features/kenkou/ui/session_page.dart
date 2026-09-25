@@ -15,6 +15,7 @@ import '../../../core/voice/syllable.dart';
 import '../domain/exercise_program.dart';
 import '../domain/face_geometry.dart';
 import 'face_markers.dart';
+import 'feedback.dart';
 import 'lip_overlay.dart';
 import 'session_hud.dart';
 import 'session_result_view.dart';
@@ -82,14 +83,18 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
 
   String? _thumbText;
   Timer? _thumbTimer;
-  String? _hint;
+
+  FeedbackMessage? _hint;
   Timer? _hintTimer;
+
+  final _holdFeedback =
+      SettledValue<FeedbackMessage?>(const Duration(milliseconds: 400), null);
   Timer? _advanceTimer;
 
   DateTime? _lastRepAt;
 
-  int _guidedRemaining = 0;
-  Timer? _guidedTimer;
+  int _countdown = 0;
+  Timer? _countdownTimer;
 
   bool _savingVideo = true;
   String? _videoPath;
@@ -153,7 +158,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     _thumbTimer?.cancel();
     _hintTimer?.cancel();
     _advanceTimer?.cancel();
-    _guidedTimer?.cancel();
+    _countdownTimer?.cancel();
     _pulse.dispose();
     _recorder.discard();
     _detector?.dispose();
@@ -186,6 +191,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     setState(() {
       _frame = frame;
       _targetScore = score;
+      _holdFeedback.update(holdFeedback(_session), DateTime.now());
     });
     _handle(event);
   }
@@ -217,10 +223,11 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
 
   double _scoreFor(ExerciseStep step, FaceFrame frame) {
     if (!frame.isPoseUsable) return 0;
+    final shape = _session.targetShape;
     return switch (step.mode) {
-      StepMode.face => _session.targetShape == null
+      StepMode.face => shape == null
           ? 0
-          : _classifier.scoreFor(frame, _session.targetShape!),
+          : _classifier.scoreFor(frame, shape),
       StepMode.speech || StepMode.guided => 0,
     };
   }
@@ -267,12 +274,14 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     final justCounted = _lastRepAt != null &&
         DateTime.now().difference(_lastRepAt!) < const Duration(milliseconds: 800);
     if (justCounted) return;
-    _showHint('再說一次「${target.label}」');
+    _showHint(FeedbackMessage('再說一次「${target.label}」', FeedbackTone.nudge));
   }
 
   void _enterStep() {
-    _guidedTimer?.cancel();
+    _countdownTimer?.cancel();
+    _hintTimer?.cancel();
     _hint = null;
+    _holdFeedback.reset(null);
     _detector?.restart();
 
     final step = _session.step;
@@ -281,20 +290,35 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     } else {
       _pulse.stop();
     }
-    if (step.mode == StepMode.guided) _startCountdown(step);
+    if (step.mode == StepMode.guided) _startCueCountdown();
     if (mounted) setState(() {});
   }
 
-  void _startCountdown(ExerciseStep step) {
-    _guidedTimer?.cancel();
-    _guidedRemaining = step.guidedSeconds;
-    _guidedTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+  void _startCueCountdown() {
+    final cue = _session.currentCue;
+    if (cue == null) return;
+    _startCountdown(cue.seconds,
+        onDone: () => _handle(_session.completeGuided()));
+  }
+
+  void _startCountdown(int seconds, {required VoidCallback onDone}) {
+    _countdownTimer?.cancel();
+    _countdown = seconds;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
-      setState(() => _guidedRemaining--);
-      if (_guidedRemaining > 0) return;
+      setState(() => _countdown--);
+      if (_countdown > 0) return;
       timer.cancel();
-      _handle(_session.completeGuided());
+      onDone();
     });
+  }
+
+  void _endRest() {
+    final event = _session.finishRest();
+    if (event == SessionEvent.none) {
+      _showHint(const FeedbackMessage('再一次!', FeedbackTone.nudge));
+    }
+    _handle(event);
   }
 
   void _handle(SessionEvent event) {
@@ -302,15 +326,26 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
       case SessionEvent.none:
         break;
       case SessionEvent.partial:
-        final next = _session.targetShape;
-        if (next != null) {
-          _showHint('很好!接著「${next.label}」');
+        if (_session.step.mode == StepMode.guided) {
+          _startCueCountdown();
+          setState(() {});
+          break;
         }
+        setState(() => _holdFeedback.reset(null));
       case SessionEvent.rep:
+        _holdFeedback.reset(null);
         _showThumb('做對了!');
+      case SessionEvent.rest:
+        _holdFeedback.reset(null);
+        _showThumb('做對了!');
+        final rest = _session.step.rest;
+        if (rest != null) _startCountdown(rest.inSeconds, onDone: _endRest);
       case SessionEvent.stepDone:
-        _guidedTimer?.cancel();
-        _showThumb(_session.step.mode == StepMode.guided ? '完成!' : '做對了!');
+        _countdownTimer?.cancel();
+        final step = _session.step;
+        _showThumb(step.mode == StepMode.guided || step.rest != null
+            ? '完成!'
+            : '做對了!');
         _advanceTimer = Timer(const Duration(milliseconds: 1400), _advance);
     }
   }
@@ -327,7 +362,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
 
   void _skip() {
     if (_phase != SessionPhase.running) return;
-    _guidedTimer?.cancel();
+    _countdownTimer?.cancel();
     final event = _session.skip();
     if (event != SessionEvent.stepDone) return;
     _advanceTimer = Timer(const Duration(milliseconds: 200), _advance);
@@ -342,16 +377,17 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     });
   }
 
-  void _showHint(String text) {
+  void _showHint(FeedbackMessage message,
+      {Duration duration = const Duration(milliseconds: 2200)}) {
     _hintTimer?.cancel();
-    setState(() => _hint = text);
-    _hintTimer = Timer(const Duration(milliseconds: 2200), () {
+    setState(() => _hint = message);
+    _hintTimer = Timer(duration, () {
       if (mounted) setState(() => _hint = null);
     });
   }
 
   Future<void> _finish() async {
-    _guidedTimer?.cancel();
+    _countdownTimer?.cancel();
     _pulse.stop();
     setState(() => _phase = SessionPhase.done);
 
@@ -420,7 +456,8 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
             Positioned.fill(
               child: CustomPaint(
                 painter: LipOverlayPainter(
-                    frame: _frame, matched: _session.isHolding),
+                    frame: _frame,
+                    matched: _session.isHolding && !_session.resting),
               ),
             ),
           if (step != null && step.marker != FaceMarker.none)
@@ -449,8 +486,8 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
               targetScore: _targetScore,
               isRecording: _recorder.isRecording,
               voiceReady: _voiceReady,
-              hint: _hint,
-              guidedRemaining: _guidedRemaining,
+              feedback: _hint ?? _holdFeedback.value,
+              countdown: _countdown,
               lastHeard: _detector?.lastHeard,
               lastHeardDebug: _lastHeardDebug,
               onExit: _confirmExit,
