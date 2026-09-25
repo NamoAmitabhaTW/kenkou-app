@@ -407,13 +407,14 @@ void main() {
   });
 
   group('整套內容', () {
-    test('次數跟著設定走', () {
+    test('次數跟著設定走,張口訓練照教材固定', () {
       const settings = KenkouSettings(faceReps: 7, patakaReps: 3);
       final steps = buildProgram(settings);
       ExerciseStep byId(String id) => steps.firstWhere((s) => s.id == id);
 
       expect(byId('lips_u_i').reps, 7);
       expect(byId('cheek_puff_suck').reps, 7);
+      expect(byId('mouth_open').reps, 2);
 
       final pataka = steps.where((s) => s.mode == StepMode.speech).toList();
       expect(pataka, hasLength(4 * kPatakaSets));
@@ -425,7 +426,7 @@ void main() {
     test('整套 16 個動作', () {
       final steps = buildProgram(const KenkouSettings());
       expect(steps.map((s) => s.id), [
-        'lips_u_i', 'mouth_open', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2', 'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual',
+        'lips_u_i', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2', 'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual', 'mouth_open',
       ]);
       final press = steps.where((s) => s.marker == FaceMarker.cheek).toList();
       expect(press.map((s) => s.side), [FaceSide.left, FaceSide.right]);
@@ -448,6 +449,21 @@ void main() {
       expect(cheeks.cues.map((c) => c.text), ['鼓起臉頰', '縮起臉頰']);
       expect(cheeks.cues.map((c) => c.seconds), [5, 5]);
       expect(cheeks.guidedCues, hasLength(10));
+    });
+
+    test('張口訓練:張口維持 10 秒(掉下去暫停)、閉口休息 10 秒,有注意事項', () {
+      final open = buildProgram(const KenkouSettings())
+          .firstWhere((s) => s.id == 'mouth_open');
+      expect(open.shapes, [MouthShape.a]);
+      expect(open.hold, const Duration(seconds: 10));
+      expect(open.pauseOnDrop, isTrue);
+      expect(open.rest, const Duration(seconds: 10));
+      expect(open.caution, isNotNull);
+
+      final s = KenkouSession(
+          steps: [open], defaultHold: const Duration(milliseconds: 1500));
+      expect(s.tracker!.requiredHold, const Duration(seconds: 10));
+      expect(s.tracker!.pauseOnDrop, isTrue);
     });
 
     test('引導步驟都有分段提示,每一段都有字、倒數都大於 0 秒', () {

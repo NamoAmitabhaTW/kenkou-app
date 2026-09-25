@@ -175,6 +175,39 @@ void main() {
       expect(sound.top, lessThan(prompt.bottom));
     });
 
+    testWidgets('張口訓練:「維持住」和還要撐幾秒放在回饋元件上;休息時換成閉口',
+        (tester) async {
+      useNarrowPhone(tester);
+      final open = buildProgram(const KenkouSettings())
+          .firstWhere((s) => s.id == 'mouth_open');
+      final session = KenkouSession(steps: [open], defaultHold: _hold);
+
+      await pumpHud(tester, session);
+      expect(find.text('嘴巴慢慢張大'), findsOneWidget);
+      expect(find.text('張到最大,維持 10 秒'), findsOneWidget);
+      expect(find.text('第 1 / 2 次'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      session.onFaceScore(0.95);
+      await pumpHud(tester, session, feedback: _holding);
+      expect(find.text('很好!維持住'), findsOneWidget);
+      expect(find.text('10'), findsOneWidget);
+
+      session.tracker!.held = const Duration(seconds: 4);
+      session.onFaceScore(0.1);
+      session.onFaceScore(0.95);
+      await pumpHud(tester, session, feedback: _holding);
+      expect(find.text('6'), findsOneWidget);
+
+      session.resting = true;
+      await pumpHud(tester, session, countdown: 7);
+      expect(find.text('嘴巴閉起來休息'), findsOneWidget);
+      expect(find.text('7'), findsOneWidget);
+      expect(find.text('張到最大,維持 10 秒'), findsNothing,
+          reason: '已經有大字和倒數圈,不重複');
+    });
+
     testWidgets('引導步驟:名稱小字、動作大字,重複的分段顯示第幾組', (tester) async {
       final cheeks = buildProgram(const KenkouSettings(faceReps: 5))
           .firstWhere((s) => s.id == 'cheek_puff_suck');

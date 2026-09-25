@@ -91,6 +91,7 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
   const cheeks = '嘴唇與臉頰體操';
   const tonguePress = '舌壓訓練';
   const saliva = '唾液腺按摩';
+  const mouthOpen = '張口訓練';
 
   return [
     ExerciseStep(
@@ -98,13 +99,6 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       section: lips,
       mode: StepMode.face,
       shapes: const [MouthShape.u, MouthShape.i],
-      reps: s.faceReps,
-    ),
-    ExerciseStep(
-      id: 'mouth_open',
-      section: lips,
-      mode: StepMode.face,
-      shapes: const [MouthShape.a],
       reps: s.faceReps,
     ),
     ExerciseStep(
@@ -167,6 +161,19 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       marker: FaceMarker.sublingual,
       cues: [GuidedCue('兩手拇指往上壓下巴下方', seconds: 20)],
       detail: '拇指併攏,抵住軟軟的地方,慢慢壓 10 次',
+    ),
+
+    ExerciseStep(
+      id: 'mouth_open',
+      section: mouthOpen,
+      mode: StepMode.face,
+      shapes: const [MouthShape.a],
+      reps: 2,
+      hold: const Duration(seconds: 10),
+      pauseOnDrop: true,
+      rest: const Duration(seconds: 10),
+      detail: '張到最大,維持 10 秒',
+      caution: '張口不要勉強,以不會痛為限',
     ),
   ];
 }
