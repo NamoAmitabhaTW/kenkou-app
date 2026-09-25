@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:face_mesh/face_mesh.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futuremode2026/core/voice/syllable.dart';
@@ -438,6 +440,27 @@ void main() {
       final press = steps.where((s) => s.marker == FaceMarker.cheek).toList();
       expect(press.map((s) => s.side), [FaceSide.left, FaceSide.right]);
       expect(press.every((s) => s.mode == StepMode.guided), isTrue);
+    });
+
+    test('體操名稱與順序跟 README 的健口操動作表一致', () {
+      final lines = File('README.md').readAsLinesSync();
+      final header = lines.indexWhere((l) => l.startsWith('| 動作 | 說明 | 判定方式'));
+      expect(header, isNot(-1), reason: 'README 裡找不到健口操動作表');
+
+      final readme = <String>[];
+      for (final line in lines.skip(header + 2)) {
+        if (!line.startsWith('|')) break;
+        final cells = line.split('|').map((c) => c.trim()).toList();
+        if (cells[3].contains('規劃中')) continue;
+        readme.add(cells[1]);
+      }
+
+      final program = <String>[];
+      for (final step in buildProgram(const KenkouSettings())) {
+        final name = step.section.split(' ').first;
+        if (program.isEmpty || program.last != name) program.add(name);
+      }
+      expect(program, readme);
     });
 
     test('口唇是先屋再衣算一組;臉頰改成倒數引導,鼓起、縮起算一組', () {
