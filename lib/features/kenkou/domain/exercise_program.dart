@@ -21,13 +21,26 @@ enum FaceMarker {
   submandibular,
 
   sublingual,
+
+  tongueDown,
+
+  tongueUp,
+
+  tongueSides,
+
+  tongueCircleClockwise,
+
+  tongueCircleCounterclockwise,
 }
 
 class GuidedCue {
-  const GuidedCue(this.text, {required this.seconds}) : assert(seconds > 0);
+  const GuidedCue(this.text, {required this.seconds, this.marker})
+      : assert(seconds > 0);
 
   final String text;
   final int seconds;
+
+  final FaceMarker? marker;
 }
 
 class ExerciseStep {
@@ -95,6 +108,7 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
   const tongueOut = '伸舌吞嚥體操';
   const forehead = '額頭體操';
   const swallow = '吞嚥體操';
+  const tongue = '舌頭訓練';
 
   return [
     ExerciseStep(
@@ -216,6 +230,42 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       ],
       detail: '手放在喉嚨,下巴稍微往內收',
       caution: '維持不到 5 秒也沒關係,不要勉強',
+    ),
+
+    const ExerciseStep(
+      id: 'tongue_down',
+      section: tongue,
+      mode: StepMode.guided,
+      marker: FaceMarker.tongueDown,
+      cues: [GuidedCue('舌頭往下伸', seconds: 20)],
+      detail: '像要碰到下巴尖端一樣',
+    ),
+    const ExerciseStep(
+      id: 'tongue_up',
+      section: tongue,
+      mode: StepMode.guided,
+      marker: FaceMarker.tongueUp,
+      cues: [GuidedCue('舌頭往上伸', seconds: 20)],
+      detail: '像要碰到鼻尖一樣',
+    ),
+    const ExerciseStep(
+      id: 'tongue_sides',
+      section: tongue,
+      mode: StepMode.guided,
+      marker: FaceMarker.tongueSides,
+      cues: [GuidedCue('舌頭往左、往右伸', seconds: 20)],
+    ),
+    const ExerciseStep(
+      id: 'tongue_circle',
+      section: tongue,
+      mode: StepMode.guided,
+      cues: [
+        GuidedCue('舌頭順時針轉圈',
+            seconds: 15, marker: FaceMarker.tongueCircleClockwise),
+        GuidedCue('舌頭逆時針轉圈',
+            seconds: 15, marker: FaceMarker.tongueCircleCounterclockwise),
+      ],
+      detail: '跟著綠色箭頭的方向轉',
     ),
   ];
 }

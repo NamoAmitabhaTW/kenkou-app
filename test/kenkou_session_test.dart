@@ -423,10 +423,17 @@ void main() {
           [...Syllable.values, ...Syllable.values]);
     });
 
-    test('整套 20 個動作', () {
+    test('整套 24 個動作', () {
       final steps = buildProgram(const KenkouSettings());
       expect(steps.map((s) => s.id), [
-        'lips_u_i', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2', 'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual', 'mouth_open', 'tongue_out_swallow', 'forehead_push', 'swallow_check', 'swallow_hold',
+        'lips_u_i', 'cheek_puff_suck',
+        'tongue_press_left', 'tongue_press_right',
+        'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1',
+        'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2',
+        'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual',
+        'mouth_open',
+        'tongue_out_swallow', 'forehead_push', 'swallow_check', 'swallow_hold',
+        'tongue_down', 'tongue_up', 'tongue_sides', 'tongue_circle',
       ]);
       final press = steps.where((s) => s.marker == FaceMarker.cheek).toList();
       expect(press.map((s) => s.side), [FaceSide.left, FaceSide.right]);
@@ -478,13 +485,50 @@ void main() {
       }
     });
 
-    test('唾液腺按摩都有臉上的標記', () {
+    test('從伸舌吞嚥體操開始每個動作都是 20 秒(舌頭繞圈兩個方向各 15 秒),'
+        '吞嚥「維持」那一段固定 5 秒', () {
+      final steps = buildProgram(const KenkouSettings());
+      final from = steps.indexWhere((s) => s.id == 'tongue_out_swallow');
+      for (final step in steps.skip(from)) {
+        final total = step.guidedCues.fold(0, (sum, c) => sum + c.seconds);
+        expect(total, step.id == 'tongue_circle' ? 30 : 20, reason: step.id);
+      }
+      final hold = steps.firstWhere((s) => s.id == 'swallow_hold');
+      expect(hold.cues.firstWhere((c) => c.text.contains('維持')).seconds, 5);
+    });
+
+    test('按摩與舌頭訓練都有臉上的標記', () {
       final markers = {
         for (final s in buildProgram(const KenkouSettings())) s.id: s.marker,
       };
       expect(markers['saliva_parotid'], FaceMarker.parotid);
       expect(markers['saliva_submandibular'], FaceMarker.submandibular);
       expect(markers['saliva_sublingual'], FaceMarker.sublingual);
+      expect(markers['tongue_down'], FaceMarker.tongueDown);
+      expect(markers['tongue_up'], FaceMarker.tongueUp);
+      expect(markers['tongue_sides'], FaceMarker.tongueSides);
+    });
+
+    test('舌頭繞圈:先順時針 15 秒、再逆時針 15 秒,箭頭跟著換方向', () {
+      final circle = buildProgram(const KenkouSettings())
+          .firstWhere((s) => s.id == 'tongue_circle');
+      expect(circle.cues.map((c) => c.seconds), [15, 15]);
+      expect(circle.cues.map((c) => c.marker), [
+        FaceMarker.tongueCircleClockwise,
+        FaceMarker.tongueCircleCounterclockwise,
+      ]);
+
+      final s = KenkouSession(steps: [circle], defaultHold: Duration.zero);
+      expect(s.currentMarker, FaceMarker.tongueCircleClockwise);
+      s.completeGuided();
+      expect(s.currentMarker, FaceMarker.tongueCircleCounterclockwise);
+    });
+
+    test('分段沒指定標記時,沿用步驟的標記', () {
+      final down = buildProgram(const KenkouSettings())
+          .firstWhere((s) => s.id == 'tongue_down');
+      final s = KenkouSession(steps: [down], defaultHold: Duration.zero);
+      expect(s.currentMarker, FaceMarker.tongueDown);
     });
 
     test('教材有寫注意事項的動作都要顯示:張口、額頭、吞嚥', () {

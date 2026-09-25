@@ -50,6 +50,12 @@ class FaceMarkerPainter extends CustomPainter {
         _submandibular(canvas, projection, faceWidth);
       case FaceMarker.sublingual:
         _sublingual(canvas, projection, faceWidth);
+      case FaceMarker.tongueDown ||
+            FaceMarker.tongueUp ||
+            FaceMarker.tongueSides ||
+            FaceMarker.tongueCircleClockwise ||
+            FaceMarker.tongueCircleCounterclockwise:
+        _tongue(canvas, projection);
     }
   }
 
@@ -106,6 +112,50 @@ class FaceMarkerPainter extends CustomPainter {
     _arrow(canvas, center + Offset(0, radius * 3.6), -math.pi / 2,
         radius * 2, '');
     _label(canvas, center + Offset(radius * 3.4, -radius * 0.6), '舌下腺');
+  }
+
+  void _tongue(Canvas canvas, FaceMeshProjection projection) {
+    final outer = frame.outerLip.map(projection.project).toList();
+    if (outer.length < 20) return;
+    final cornerA = outer[0];
+    final cornerB = outer[10];
+    final bottom = outer[5];
+    final top = outer[15];
+    final center = outer.reduce((a, b) => a + b) / outer.length.toDouble();
+    final width = (cornerA - cornerB).distance;
+
+    switch (marker) {
+      case FaceMarker.tongueDown:
+        _arrow(canvas, bottom + Offset(0, width * 0.12), math.pi / 2,
+            width * 0.55, '');
+        _label(canvas, bottom + Offset(width * 0.8, width * 0.25), '往下伸');
+      case FaceMarker.tongueUp:
+        _arrow(canvas, top - Offset(0, width * 0.1), -math.pi / 2,
+            width * 0.35, '');
+        _label(canvas, top + Offset(width * 0.8, -width * 0.45), '往上伸');
+      case FaceMarker.tongueSides:
+        final (screenLeft, screenRight) = cornerA.dx < cornerB.dx
+            ? (cornerA, cornerB)
+            : (cornerB, cornerA);
+        _arrow(canvas, screenLeft - Offset(width * 0.1, 0), math.pi,
+            width * 0.45, '');
+        _arrow(canvas, screenRight + Offset(width * 0.1, 0), 0, width * 0.45,
+            '');
+        _label(canvas, center + Offset(0, width * 0.5), '往左右伸');
+      case FaceMarker.tongueCircleClockwise ||
+            FaceMarker.tongueCircleCounterclockwise:
+        final clockwise = marker == FaceMarker.tongueCircleClockwise;
+        final oval = Rect.fromCenter(
+          center: center,
+          width: width * 1.5,
+          height: math.max((bottom - top).distance * 1.7, width * 0.8),
+        );
+        _orbit(canvas, oval, pulse * 2 * math.pi, clockwise: clockwise);
+        _label(canvas, Offset(center.dx, oval.bottom + 10),
+            clockwise ? '順時針' : '逆時針');
+      default:
+        return;
+    }
   }
 
   void _arrow(

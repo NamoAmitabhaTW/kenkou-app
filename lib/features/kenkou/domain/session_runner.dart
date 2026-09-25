@@ -60,6 +60,8 @@ class KenkouSession {
   GuidedCue? get currentCue =>
       step.mode == StepMode.guided ? step.guidedCues[subIndex] : null;
 
+  FaceMarker get currentMarker => currentCue?.marker ?? step.marker;
+
   int get currentRound {
     final round = switch (step.mode) {
       StepMode.guided => subIndex ~/ step.cues.length + 1,

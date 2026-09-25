@@ -173,7 +173,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
 
     final step = _session.step;
     if (!step.usesFaceScore) {
-      if (step.marker != FaceMarker.none) {
+      if (_session.currentMarker != FaceMarker.none) {
         setState(() => _frame = frame);
       } else {
         _frame = frame;
@@ -269,15 +269,27 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
     _holdFeedback.reset(null);
     _detector?.restart();
 
-    final step = _session.step;
-    if (step.marker != FaceMarker.none) {
-      _pulse.repeat();
-    } else {
-      _pulse.stop();
-    }
-    if (step.mode == StepMode.guided) _startCueCountdown();
+    _syncPulse();
+    if (_session.step.mode == StepMode.guided) _startCueCountdown();
     if (mounted) setState(() {});
   }
+
+  void _syncPulse() {
+    final marker = _session.currentMarker;
+    if (marker == FaceMarker.none) {
+      _pulse.stop();
+      return;
+    }
+    _pulse.duration = _pulsePeriodFor(marker);
+    _pulse.repeat();
+  }
+
+  static Duration _pulsePeriodFor(FaceMarker marker) => switch (marker) {
+        FaceMarker.tongueCircleClockwise ||
+        FaceMarker.tongueCircleCounterclockwise =>
+          const Duration(seconds: 5),
+        _ => const Duration(milliseconds: 1600),
+      };
 
   void _startCueCountdown() {
     final cue = _session.currentCue;
@@ -312,6 +324,7 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
         break;
       case SessionEvent.partial:
         if (_session.step.mode == StepMode.guided) {
+          _syncPulse();
           _startCueCountdown();
           setState(() {});
           break;
@@ -445,14 +458,14 @@ class _KenkouSessionPageState extends State<KenkouSessionPage>
                     matched: _session.isHolding && !_session.resting),
               ),
             ),
-          if (step != null && step.marker != FaceMarker.none)
+          if (step != null && _session.currentMarker != FaceMarker.none)
             Positioned.fill(
               child: AnimatedBuilder(
                 animation: _pulse,
                 builder: (context, _) => CustomPaint(
                   painter: FaceMarkerPainter(
                     frame: _frame,
-                    marker: step.marker,
+                    marker: _session.currentMarker,
                     side: step.side,
                     matched: step.usesFaceScore && _session.isHolding,
                     pulse: _pulse.value,
