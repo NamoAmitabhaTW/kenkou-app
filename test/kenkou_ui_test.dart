@@ -104,6 +104,31 @@ void main() {
       }
     });
 
+    testWidgets('口唇體操:先大字顯示「屋～」,做到了才換「衣～」,兩個都做到算一組',
+        (tester) async {
+      final lips = buildProgram(const KenkouSettings(faceReps: 5))
+          .firstWhere((s) => s.id == 'lips_u_i');
+      final session = KenkouSession(steps: [lips], defaultHold: _hold);
+
+      await pumpHud(tester, session);
+      expect(find.text('嘴唇往前噘起'), findsOneWidget);
+      expect(find.text('屋～'), findsOneWidget);
+      expect(find.text('衣～'), findsNothing, reason: '一次只顯示一個嘴型');
+      expect(find.text('第 1 / 5 組'), findsOneWidget);
+
+      completeShape(session);
+      await pumpHud(tester, session);
+      expect(find.text('嘴角往兩邊拉開'), findsOneWidget);
+      expect(find.text('衣～'), findsOneWidget);
+      expect(find.text('屋～'), findsNothing);
+      expect(find.text('第 1 / 5 組'), findsOneWidget);
+
+      completeShape(session);
+      await pumpHud(tester, session);
+      expect(find.text('屋～'), findsOneWidget);
+      expect(find.text('第 2 / 5 組'), findsOneWidget);
+    });
+
     testWidgets('回饋是動作卡下面另一個元件,動作的大字不會被換掉', (tester) async {
       final face = buildProgram(const KenkouSettings())
           .firstWhere((s) => s.mode == StepMode.face);

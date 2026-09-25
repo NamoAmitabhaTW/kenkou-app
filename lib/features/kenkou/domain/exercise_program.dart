@@ -85,10 +85,10 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
 
   return [
     ExerciseStep(
-      id: 'mouth_pucker',
+      id: 'lips_u_i',
       section: lips,
       mode: StepMode.face,
-      shapes: const [MouthShape.u],
+      shapes: const [MouthShape.u, MouthShape.i],
       reps: s.faceReps,
     ),
     ExerciseStep(
@@ -96,13 +96,6 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
       section: lips,
       mode: StepMode.face,
       shapes: const [MouthShape.a],
-      reps: s.faceReps,
-    ),
-    ExerciseStep(
-      id: 'mouth_ii',
-      section: lips,
-      mode: StepMode.face,
-      shapes: const [MouthShape.i],
       reps: s.faceReps,
     ),
     const ExerciseStep(
