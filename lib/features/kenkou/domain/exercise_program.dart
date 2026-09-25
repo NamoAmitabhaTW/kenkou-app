@@ -15,6 +15,12 @@ enum FaceMarker {
   none,
 
   cheek,
+
+  parotid,
+
+  submandibular,
+
+  sublingual,
 }
 
 class GuidedCue {
@@ -84,6 +90,7 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
   const lips = '口唇體操';
   const cheeks = '嘴唇與臉頰體操';
   const tonguePress = '舌壓訓練';
+  const saliva = '唾液腺按摩';
 
   return [
     ExerciseStep(
@@ -137,5 +144,29 @@ List<ExerciseStep> buildProgram(KenkouSettings s) {
           syllable: syllable,
           reps: s.patakaReps,
         ),
+    const ExerciseStep(
+      id: 'saliva_parotid',
+      section: saliva,
+      mode: StepMode.guided,
+      marker: FaceMarker.parotid,
+      cues: [GuidedCue('手指放耳朵前面,畫圓按摩', seconds: 20)],
+      detail: '大約在上排後牙的位置,按 10 圈',
+    ),
+    const ExerciseStep(
+      id: 'saliva_submandibular',
+      section: saliva,
+      mode: StepMode.guided,
+      marker: FaceMarker.submandibular,
+      cues: [GuidedCue('按壓下巴骨內側的凹陷處', seconds: 25)],
+      detail: '從耳朵下方往下巴,依序按 3～4 處,每處 5 下',
+    ),
+    const ExerciseStep(
+      id: 'saliva_sublingual',
+      section: saliva,
+      mode: StepMode.guided,
+      marker: FaceMarker.sublingual,
+      cues: [GuidedCue('兩手拇指往上壓下巴下方', seconds: 20)],
+      detail: '拇指併攏,抵住軟軟的地方,慢慢壓 10 次',
+    ),
   ];
 }

@@ -9,6 +9,8 @@ import 'package:futuremode2026/features/kenkou/domain/mouth_shape.dart';
 import 'package:futuremode2026/features/kenkou/domain/session_runner.dart';
 import 'package:futuremode2026/core/voice/syllable_map.dart';
 
+import 'support/face_frames.dart';
+
 void main() {
   ExerciseStep face(String id, List<MouthShape> shapes, {int reps = 2}) =>
       ExerciseStep(
@@ -420,10 +422,10 @@ void main() {
           [...Syllable.values, ...Syllable.values]);
     });
 
-    test('整套 13 個動作', () {
+    test('整套 16 個動作', () {
       final steps = buildProgram(const KenkouSettings());
       expect(steps.map((s) => s.id), [
-        'lips_u_i', 'mouth_open', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2',
+        'lips_u_i', 'mouth_open', 'cheek_puff_suck', 'tongue_press_left', 'tongue_press_right', 'pataka_pa_1', 'pataka_ta_1', 'pataka_ka_1', 'pataka_ra_1', 'pataka_pa_2', 'pataka_ta_2', 'pataka_ka_2', 'pataka_ra_2', 'saliva_parotid', 'saliva_submandibular', 'saliva_sublingual',
       ]);
       final press = steps.where((s) => s.marker == FaceMarker.cheek).toList();
       expect(press.map((s) => s.side), [FaceSide.left, FaceSide.right]);
@@ -458,6 +460,15 @@ void main() {
           expect(cue.seconds, greaterThan(0), reason: step.id);
         }
       }
+    });
+
+    test('唾液腺按摩都有臉上的標記', () {
+      final markers = {
+        for (final s in buildProgram(const KenkouSettings())) s.id: s.marker,
+      };
+      expect(markers['saliva_parotid'], FaceMarker.parotid);
+      expect(markers['saliva_submandibular'], FaceMarker.submandibular);
+      expect(markers['saliva_sublingual'], FaceMarker.sublingual);
     });
 
     test('發音體操只放「大聲說」和要說的音,不放發音部位的小字', () {
@@ -600,6 +611,51 @@ void main() {
       w.add(noFace, t0);
       expect(w.faceMissing(t0.add(ms(300))), isFalse);
       expect(w.faceMissing(t0.add(ms(600))), isTrue);
+    });
+  });
+
+  group('唾液腺按摩的位置', () {
+    test('耳下腺:耳前往同一邊的嘴角走兩成', () {
+      final points = FaceGeometry.parotidPoints(contourFrame());
+      expect(points, hasLength(2));
+      expect(points[0].dx, closeTo(0.284, 1e-4));
+      expect(points[0].dy, closeTo(0.484, 1e-4));
+      expect(points[1].dx, closeTo(0.716, 1e-4));
+      expect(points[1].dy, closeTo(0.484, 1e-4));
+    });
+
+    test('耳前兩點的順序對調,還是配到同一邊的嘴角', () {
+      final points = FaceGeometry.parotidPoints(contourFrame(
+          earA: const Offset(0.75, 0.45), earB: const Offset(0.25, 0.45)));
+      expect(points[0].dx, closeTo(0.716, 1e-4));
+      expect(points[1].dx, closeTo(0.284, 1e-4));
+    });
+
+    test('顎下腺:兩邊各 4 點,從下顎角往下巴排,再往下挪到下顎線內側', () {
+      final rows = FaceGeometry.submandibularPoints(contourFrame());
+      expect(rows, hasLength(2));
+      for (final row in rows) {
+        expect(row, hasLength(4));
+        for (var i = 1; i < row.length; i++) {
+          expect((row[i].dx - 0.5).abs(), lessThan((row[i - 1].dx - 0.5).abs()),
+              reason: '越後面的點越靠近下巴');
+        }
+      }
+      expect(rows[0][0].dx, closeTo(0.32, 1e-4));
+      expect(rows[0][0].dy, closeTo(0.651 + 0.23 * 0.08, 1e-4));
+    });
+
+    test('舌下腺:下巴再往下一點', () {
+      final point = FaceGeometry.sublingualPoint(contourFrame())!;
+      expect(point.dx, closeTo(0.5, 1e-4));
+      expect(point.dy, closeTo(0.75 + 0.23 * 0.15, 1e-4));
+    });
+
+    test('原生端沒送錨點時不標', () {
+      const frame = FaceFrame(hasFace: true);
+      expect(FaceGeometry.parotidPoints(frame), isEmpty);
+      expect(FaceGeometry.submandibularPoints(frame), isEmpty);
+      expect(FaceGeometry.sublingualPoint(frame), isNull);
     });
   });
 }
