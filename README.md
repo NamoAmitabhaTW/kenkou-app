@@ -4,7 +4,17 @@
 
 健口動一動是一個開源的長者照護 App，希望把原本零散、容易忘記、難以堅持的日常保健訓練，變成一件**容易開始、有溫度、有陪伴，而且每天都做得到**的事情。
 
-本專案為 **2026 台灣未來際黑客松** 的 prototype，目前正透過 **iThome 鐵人賽「Build on Google AI」** 系列文章持續開發與記錄。
+本專案源自 **2026 台灣未來際黑客松** 的 prototype，並在 **2026 iThome 鐵人賽「Build on Google AI」** 30 天系列文章中持續開發與記錄（[文章總表](#開發紀錄ithome-鐵人賽-30-天)）。
+
+> [!IMPORTANT]
+> **這個 repo 還不是最新版本（2026/10/15）**
+>
+> 目前的程式是 2026/9/25 的版本：黑客松 prototype，加上補齊的健口操、Android 版臉部偵測與螢幕錄影，大約到鐵人賽 Day11。
+>
+> Day12 之後的功能（雲端語音辨識、玩AI、暖身與跟著音樂動一動、長輩友善的新介面）還在本機測試。
+> 發音辨識要用雲端還是地端、雲端服務的營運費用怎麼處理，定案後會再同步上來。
+>
+> 下方的功能表用三種標示區分：✅ 已在這個 repo｜🧪 本機測試中，還沒同步｜📝 規劃中
 
 ---
 
@@ -18,11 +28,14 @@
 
 因此，本 App 聚焦兩個方向：**提升口腔機能**與**延緩認知退化**。
 
+研究中的認知刺激，多半是由專人帶領的團體活動，健口動一動沒辦法取代這樣的課程。
+希望讓健口動一動成為**互動的契機**，把家人的陪伴與互動融入遊戲和訓練（[Day3](https://ithelp.ithome.com.tw/articles/10412806)）。
+
 ---
 
 ## 核心功能
 
-### 🦷 提升口腔機能：健口操
+### 🦷 提升口腔機能：健口操 ✅
 
 參考日本牙科醫師會「オーラルフレイル対策のための口腔体操」設計，透過臉部網格偵測與語音辨識判定動作是否正確，其餘動作以計時方式引導完成。
 
@@ -40,53 +53,150 @@
 | 繞口令練習 | 四句，每句連說 3 次 | 📝 規劃中（語音辨識） |
 | 舌頭訓練 | 向下／向上／左右伸舌、沿嘴唇順時針與逆時針各繞一段 | 計時引導 |
 
+🧪 本機測試中：每個動作播放自錄的語音口令（[Day29](https://ithelp.ithome.com.tw/articles/10424105)）；發音體操改用 Google Cloud Speech-to-Text 辨識（[Day16～17](https://ithelp.ithome.com.tw/articles/10419395)）。
+
 **在地化調整**
 
 - 日文繞口令無法直接翻譯，改為重新選用中文繞口令。
 - 發音體操 Pa・Ta・Ka・Ra 以「怕／踏／卡／啦」呈現，讓長者更容易看懂與操作（「啦」與日文 Ra 的發音部位不完全相同）。
 - 考量台灣長者缺牙與活動假牙比例較高，以及安全因素，暫不納入口香糖咀嚼訓練。
 
+### 🤸 動一動：肢體活動
+
+用 Google MediaPipe Pose Landmarker 在手機上判斷動作，兩個人可以一起做、各自打勾。
+
+| 功能 | 說明 | 狀態 | 文章 |
+| --- | --- | --- | --- |
+| 暖身動作 | 健口操前，跟著口令活動肩膀、頭頸 | 🧪 | [Day26](https://ithelp.ithome.com.tw/articles/10423130) |
+| 跟著音樂動一動 | 兩首歌，跟著口令舉手、張開雙臂、拍手、摸肩膀、身體左右彎 | 🧪 | [Day26](https://ithelp.ithome.com.tw/articles/10423130) |
+
 ### 🧠 延緩認知退化
 
-| 功能 | 說明 | 狀態 |
-| --- | --- | --- |
-| 快問快答 | 家人出題（圖片或文字，可加錄音唸題），長輩限時作答 | ✅ Prototype |
-| 小精靈吃金幣 | 唸「怕／踏／卡／啦」操控小精靈上下左右移動 | ✅ Prototype |
-| 俄羅斯方塊 | 唸「怕／踏／卡／啦」操控方塊左右移動、向下移動、旋轉 | ✅ Prototype |
-| 一起畫畫 | 家人一起透過語音，共同創作一幅 AI 畫作 | 📝 規劃中 |
-| 一起大冒險 | 上傳家庭回憶照片（可附文字說明），由 Gemini 依認知刺激研究的 14 節主題生成專屬關卡，例如多人合作擺出指定姿勢、大家一起找物拍照 | 📝 規劃中 |
+| 功能 | 說明 | 狀態 | 文章 |
+| --- | --- | --- | --- |
+| 快問快答 | 家人出題（圖片或文字，可加錄音唸題），長輩限時作答；內建 5 題預設題目 | ✅ | [Day6](https://ithelp.ithome.com.tw/articles/10414498) |
+| 小精靈吃金幣 | 唸「怕／踏／卡／啦」操控小精靈上下左右移動 | ✅（本機改用 Cloud STT 🧪） | [Day6](https://ithelp.ithome.com.tw/articles/10414498)、[Day16～17](https://ithelp.ithome.com.tw/articles/10419395) |
+| 俄羅斯方塊 | 唸「怕／踏／卡／啦」操控方塊左右移動、向下移動、旋轉 | ✅（本機改用 Cloud STT 🧪） | [Day6](https://ithelp.ithome.com.tw/articles/10414498)、[Day16～17](https://ithelp.ithome.com.tw/articles/10419395) |
+| 一起說畫 | 大家說想畫什麼，「平安」（App 裡的 AI 夥伴，用 Gemini）整理後畫成一張圖，可以再修改 | 🧪 | [Day22](https://ithelp.ithome.com.tw/articles/10421825) |
+| 我們的好時光 | 選一張家庭照片，平安陪大家聊照片裡的故事，最後做成好時光卡片 | 🧪 | [Day23](https://ithelp.ithome.com.tw/articles/10422192) |
+| 家中尋寶 | 家人先設好要找的寶物，大家在家裡找，找到拍照給平安看 | 🧪 | [Day23](https://ithelp.ithome.com.tw/articles/10422192) |
 
-### 🎥 影片記錄
+一起說畫、我們的好時光、家中尋寶合稱「玩AI」，由 Day6 規劃的「一起畫畫」「一起大冒險」發展而來。
+
+### 🎥 影片記錄 ✅
 
 健口操與快問快答全程錄影（畫面＋收音），儲存在手機裝置端，家人可重複觀看與分享。
+🧪 本機版的暖身動作、跟著音樂動一動也會錄影。
+
+### 🎨 長輩友善介面 🧪
+
+先定一張長輩友善檢查表：字夠大、對比夠；按鈕夠大、分得開；一次一件事；圖示配文字；對錯不只靠顏色。
+再用 Google Stitch 改版快問快答、小精靈吃金幣、俄羅斯方塊，設計規則整理成 DESIGN.md（[Day27～28](https://ithelp.ithome.com.tw/articles/10423425)）。
 
 ---
 
-## AI 技術應用
+## 技術選型與目前狀態
 
-| 狀態 | 技術 | 用途 |
+| 技術 | 執行位置 | 用途 | 狀態 | 文章 |
+| --- | --- | --- | --- | --- |
+| Google MediaPipe Face Landmarker | 手機 | 健口操的嘴型判斷（iOS、Android 共用自寫的 face_mesh plugin） | ✅ | [Day7～11](https://ithelp.ithome.com.tw/articles/10415091) |
+| sherpa-onnx streaming zipformer transducer | 手機 | 發音體操、小遊戲的語音指令 | ✅ | [Day1](https://ithelp.ithome.com.tw/articles/10411253) |
+| Google Cloud Speech-to-Text（V2 Chirp 3＋語音調整） | 雲端 | 改善單音「怕／踏／卡／啦」的辨識（語音調整：提示詞＋別名映射）；同步辨識走 Cloud Functions，串流辨識走 Cloud Run | 🧪 | [Day12](https://ithelp.ithome.com.tw/articles/10417548)、[Day16～17](https://ithelp.ithome.com.tw/articles/10419395) |
+| Cloud Functions for Firebase（App Check、Secret Manager） | 雲端 | 保管金鑰、驗證 App、發 Live API 暫時性權杖、畫圖、看照片 | 🧪 | [Day13～15](https://ithelp.ithome.com.tw/articles/10417949) |
+| Gemini Live API | 雲端 | 玩AI：平安的即時語音互動 | 🧪 | [Day21～23](https://ithelp.ithome.com.tw/articles/10421443) |
+| Nano Banana 2 | 雲端 | 一起說畫的圖、好時光卡片的插畫 | 🧪 | [Day22～23](https://ithelp.ithome.com.tw/articles/10421825) |
+| Google MediaPipe Pose Landmarker | 手機 | 暖身動作、跟著音樂動一動（同一個 face_mesh plugin 加 Pose 模式） | 🧪 | [Day24～26](https://ithelp.ithome.com.tw/articles/10422550) |
+| Google Stitch | 設計工具 | 長輩友善介面的設計稿與 DESIGN.md | 🧪 | [Day27～28](https://ithelp.ithome.com.tw/articles/10423425) |
+
+Google AI Studio 用來先試模型、寫系統指令，再接進 App（[Day18～20](https://ithelp.ithome.com.tw/articles/10420259)）。
+
+### 還沒定案的地方
+
+- **發音辨識**：雲端（Cloud STT）還是地端（sherpa-onnx）還沒定案。「怕」念八次只留下五個字，是 Chirp 2、Chirp 3 刻意的保護機制；繞口令念錯的地方沒有完整保留；「怕、踏、卡、啦」對長輩可能不好發音（[Day16](https://ithelp.ithome.com.tw/articles/10419395)、[Day29](https://ithelp.ithome.com.tw/articles/10424105)）。
+- **家中尋寶**：判斷寶物還不穩定（[Day23](https://ithelp.ithome.com.tw/articles/10422192)）。
+- **營運費用**：雲端功能按用量計費，例如一場「我們的好時光」約 NT$9.60（[Day23](https://ithelp.ithome.com.tw/articles/10422192)）。目前還無法負擔讓所有長輩免費使用，也在評估其他可行的落地方式，或是先只做開源、地端的 MediaPipe 功能（[Day30](https://ithelp.ithome.com.tw/articles/10424365)）。
+- **持續使用**：不同的使用者，喜歡的活動不一樣，要請更多長輩用過，才能做出長輩願意持續使用的訓練 App（[Day29](https://ithelp.ithome.com.tw/articles/10424105)）。
+
+---
+
+## 使用者實測
+
+| 日期 | 地點 | 對象 |
 | --- | --- | --- |
-| ✅ 使用中 | Google MediaPipe Face Landmarker（地端） | 臉部網格偵測，判別健口操嘴型動作是否正確 |
-| ✅ 使用中 | sherpa-onnx streaming zipformer transducer（地端） | 即時串流語音辨識，用於健口操發音判定與小遊戲語音指令 |
-| 📝 規劃中 | Google Cloud Speech-to-Text | 改善單音節「怕／踏／卡／啦」的辨識穩定度；嘗試 Speaker Diarization，支援家人一起參與問答 |
-| 📝 規劃中 | Gemini API | 一起畫畫、一起大冒險的互動內容生成 |
-| 📝 規劃中 | Google MediaPipe Pose Landmarker | 一起大冒險的多人肢體姿勢判定 |
-| 📝 規劃中 | Google Stitch | 設計更符合長輩操作需求與美觀的介面 |
+| 9/5 | 圓山花博（黑客松現場） | 2 位長輩 |
+| 10/12 | 新莊社區大學 | 4 位，50～60 歲 |
+| 10/13 | 台灣失智症協會 | 2 位副秘書長 |
+
+- **新莊社大**：勾最多的是跟著音樂動一動（3 位）；七題「用起來怎麼樣」，沒有人勾哭臉，4 位都說下次還想玩。
+- **台灣失智症協會**：玩AI 的三個活動，兩位都勾喜歡；建議先確定目標受眾，失智族群可以考慮活動分級，再加上引導、鼓勵。
+- **實測後已調整（🧪 本機）**：家中尋寶加題庫、平安開場自我介紹、健口操加上自錄的口令、平安回話快一點、說話不被打斷。
+
+詳見 [Day29](https://ithelp.ithome.com.tw/articles/10424105)。
 
 ---
 
-## 開發紀錄：iThome 鐵人賽
+## 回報給官方的 issue
 
-| Day | 主題 |
-| --- | --- |
-| Day 1 | [長者照護 —— 口腔機能訓練與延緩認知退化](https://ithelp.ithome.com.tw/articles/10411253) |
-| Day 2 | [什麼是失智症？](https://ithelp.ithome.com.tw/articles/10411829) |
-| Day 3 | [失智症能治好嗎？](https://ithelp.ithome.com.tw/articles/10412806) |
-| Day 4 | [口腔機能對長者重要嗎？](https://ithelp.ithome.com.tw/articles/10413139) |
-| Day 5 | [為什麼日本推廣口腔體操？](https://ithelp.ithome.com.tw/articles/10413546) |
-| Day 6 | [健口動一動 App：功能清單](https://ithelp.ithome.com.tw/articles/10414498) |
-| Day 7 | [臉部偵測和臉部網格偵測不同嗎？ Face Detection vs. Face Mesh Detection](https://ithelp.ithome.com.tw/articles/10415091) |
-| Day 8 | [少年，我看你面相不錯。你聽過 Google MediaPipe Face Landmarker 嗎？(上)](https://ithelp.ithome.com.tw/articles/10415600) |
+| Issue | 文章 | 回報的內容 | 官方的回應 |
+| --- | --- | --- | --- |
+| [Cloud STT #567868709](https://issuetracker.google.com/issues/567868709) | Day16 | 「怕」念八次，只留下五個字 | Chirp 2、Chirp 3 刻意的保護機制，目前沒有參數可以調整 |
+| [MediaPipe #6368](https://github.com/google-ai-edge/mediapipe/issues/6368) | Day11 | 表情係數的 *Left／*Right，以誰的左右為準 | 採納建議，在 Face Landmarker 指南和原始碼註解補上說明 |
+| [MediaPipe #6376](https://github.com/google-ai-edge/mediapipe/issues/6376) | Day25 | Hand、Gesture 的左右手，以誰為準 | 標為文件問題，維護者回覆正在處理（10/14） |
+
+---
+
+## 開發紀錄：iThome 鐵人賽 30 天
+
+**認識需求**
+
+- Day 1：[Build on Google AI ：長者照護 — 口腔機能訓練 與 延緩認知退化](https://ithelp.ithome.com.tw/articles/10411253)
+- Day 2：[什麼是失智症？](https://ithelp.ithome.com.tw/articles/10411829)
+- Day 3：[失智症能治好嗎？](https://ithelp.ithome.com.tw/articles/10412806)
+- Day 4：[口腔機能對長者重要嗎？](https://ithelp.ithome.com.tw/articles/10413139)
+- Day 5：[為什麼日本推廣口腔體操？](https://ithelp.ithome.com.tw/articles/10413546)
+- Day 6：[健口動一動 App 功能清單](https://ithelp.ithome.com.tw/articles/10414498)
+
+**Google MediaPipe Face Landmarker**
+
+- Day 7：[臉部偵測和臉部網格偵測不同嗎？ Face Detection vs. Face Mesh Detection](https://ithelp.ithome.com.tw/articles/10415091)
+- Day 8：[少年，我看你面相不錯。你聽過 Google MediaPipe Face Landmarker 嗎？(上)](https://ithelp.ithome.com.tw/articles/10415600)
+- Day 9：[少年，我看你面相不錯。你聽過 Google MediaPipe Face Landmarker 嗎？(中)](https://ithelp.ithome.com.tw/articles/10416196)
+- Day 10：[少年，我看你面相不錯。你聽過 Google MediaPipe Face Landmarker 嗎？(下)](https://ithelp.ithome.com.tw/articles/10416648)
+- Day 11：[Flutter : Google MediaPipe Face Landmarker](https://ithelp.ithome.com.tw/articles/10417184)
+
+**Google Cloud Speech-to-Text、Cloud Functions for Firebase**
+
+- Day 12：[雲端語音辨識：Google Cloud Speech to Text](https://ithelp.ithome.com.tw/articles/10417548)
+- Day 13：[Cloud Functions for Firebase（上）](https://ithelp.ithome.com.tw/articles/10417949)
+- Day 14：[Cloud Functions for Firebase（中）](https://ithelp.ithome.com.tw/articles/10418440)
+- Day 15：[Cloud Functions for Firebase（下）](https://ithelp.ithome.com.tw/articles/10418945)
+- Day 16：[Flutter : Google Cloud Speech to Text（上）](https://ithelp.ithome.com.tw/articles/10419395)
+- Day 17：[Flutter : Google Cloud Speech to Text（下）](https://ithelp.ithome.com.tw/articles/10419892)
+
+**Google AI Studio、Gemini API**
+
+- Day 18：[Google AI Studio：師爺 Gemini 登場（上）](https://ithelp.ithome.com.tw/articles/10420259)
+- Day 19：[Google AI Studio：師爺 Gemini 登場（中）](https://ithelp.ithome.com.tw/articles/10420595)
+- Day 20：[Google AI Studio：師爺 Gemini 登場（下）](https://ithelp.ithome.com.tw/articles/10420950)
+- Day 21：[Gemini API：師爺正式聘用（上）](https://ithelp.ithome.com.tw/articles/10421443)
+- Day 22：[Gemini API：師爺正式聘用（中）](https://ithelp.ithome.com.tw/articles/10421825)
+- Day 23：[Gemini API：師爺正式聘用（下）](https://ithelp.ithome.com.tw/articles/10422192)
+
+**Google MediaPipe Pose、Hand、Gesture、Holistic**
+
+- Day 24：[少年，我看你骨骼精奇。Google MediaPipe Pose、Hand、Gesture、Holistic 你聽過嗎？（上）](https://ithelp.ithome.com.tw/articles/10422550)
+- Day 25：[少年，我看你骨骼精奇。Google MediaPipe Pose、Hand、Gesture、Holistic 你聽過嗎？（中）](https://ithelp.ithome.com.tw/articles/10422854)
+- Day 26：[少年，我看你骨骼精奇。Google MediaPipe Pose、Hand、Gesture、Holistic 你聽過嗎？（下）](https://ithelp.ithome.com.tw/articles/10423130)
+
+**Google Stitch**
+
+- Day 27：[Google Stitch：妙筆俠客登場（上）](https://ithelp.ithome.com.tw/articles/10423425)
+- Day 28：[Google Stitch：妙筆俠客登場（下）](https://ithelp.ithome.com.tw/articles/10423760)
+
+**實測與回顧**
+
+- Day 29：[使用者實測與改善方向](https://ithelp.ithome.com.tw/articles/10424105)
+- Day 30：[洋流慧聚，淨土在前。](https://ithelp.ithome.com.tw/articles/10424365)
 
 ---
 
@@ -116,6 +226,8 @@
 ---
 
 ## 第三方服務、資料與素材
+
+以下是這個 repo 目前用到的項目。本機測試中的功能另外用到 Firebase、Gemini API、Cloud Speech-to-Text、Pose Landmarker 模型、自錄口令與 AI 生成的背景音樂，同步時會一併補上。
 
 | 項目 | 來源 | 授權 |
 | --- | --- | --- |
